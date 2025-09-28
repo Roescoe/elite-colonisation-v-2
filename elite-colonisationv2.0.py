@@ -40,7 +40,7 @@ class LogFileDialogClass(QDialog):
         defaultFileDir = ''
 
         if(platform.system() == 'Windows'):
-            defaultFileDir = 'C:\\Users%userprofile%\\Saved Games\\Frontier Developments\\Elite Dangerous'
+            defaultFileDir = os.path.expandvars(r"C:\Users\$USERNAME") + r'\Saved Games\Frontier Developments\Elite Dangerous'
         elif(platform.system() == 'Linux'):
             defaultFileDir = os.path.expanduser("~") + '/.local/share/Steam/steamapps/compatdata/359320/pfx/drive_c/users/steamuser/Saved Games/Frontier Developments/Elite Dangerous'
         else:
