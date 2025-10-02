@@ -16,107 +16,13 @@
   <property name="styleSheet">
    <string notr="true">background-color: black; color: snow;</string>
   </property>
-  <widget class="QWidget" name="centralwidget">
-   <widget class="QWidget" name="layoutWidget">
-    <property name="geometry">
-     <rect>
-      <x>0</x>
-      <y>70</y>
-      <width>541</width>
-      <height>161</height>
-     </rect>
-    </property>
-    <layout class="QGridLayout" name="gridLayout">
-     <item row="1" column="2">
-      <widget class="QPushButton" name="pushButton_4">
-       <property name="text">
-        <string>Total Need</string>
-       </property>
-      </widget>
-     </item>
-     <item row="2" column="1">
-      <widget class="QLabel" name="label_2">
-       <property name="text">
-        <string>TextLabel</string>
-       </property>
-      </widget>
-     </item>
-     <item row="2" column="4">
-      <widget class="QLabel" name="label_5">
-       <property name="text">
-        <string>TextLabel</string>
-       </property>
-      </widget>
-     </item>
-     <item row="0" column="4">
-      <widget class="QPushButton" name="pushButton">
-       <property name="text">
-        <string>Update</string>
-       </property>
-      </widget>
-     </item>
-     <item row="2" column="3">
-      <widget class="QLabel" name="label_4">
-       <property name="text">
-        <string>TextLabel</string>
-       </property>
-      </widget>
-     </item>
-     <item row="1" column="0">
-      <widget class="QPushButton" name="pushButton_2">
-       <property name="text">
-        <string>Category</string>
-       </property>
-      </widget>
-     </item>
-     <item row="1" column="1">
-      <widget class="QPushButton" name="pushButton_3">
-       <property name="text">
-        <string>Resource</string>
-       </property>
-      </widget>
-     </item>
-     <item row="0" column="0" colspan="4">
-      <widget class="QComboBox" name="comboBox"/>
-     </item>
-     <item row="2" column="0">
-      <widget class="QLabel" name="label">
-       <property name="text">
-        <string>TextLabel</string>
-       </property>
-      </widget>
-     </item>
-     <item row="1" column="4">
-      <widget class="QLabel" name="label_6">
-       <property name="text">
-        <string>Trips Remaining</string>
-       </property>
-      </widget>
-     </item>
-     <item row="2" column="2">
-      <widget class="QLabel" name="label_3">
-       <property name="text">
-        <string>TextLabel</string>
-       </property>
-      </widget>
-     </item>
-     <item row="1" column="3">
-      <widget class="QPushButton" name="pushButton_5">
-       <property name="text">
-        <string>Current Need</string>
-       </property>
-      </widget>
-     </item>
-    </layout>
-   </widget>
-  </widget>
   <widget class="QMenuBar" name="menubar">
    <property name="geometry">
     <rect>
      <x>0</x>
      <y>0</y>
      <width>800</width>
-     <height>22</height>
+     <height>20</height>
     </rect>
    </property>
    <widget class="QMenu" name="menuFile">
@@ -141,7 +47,6 @@
      <addaction name="action100_Days"/>
     </widget>
     <addaction name="menuload_no_older_than"/>
-    <addaction name="actionUse_Ship"/>
    </widget>
    <widget class="QMenu" name="menuFormat">
     <property name="title">
@@ -161,9 +66,15 @@
     <addaction name="actionHide_Notes"/>
     <addaction name="menuTable_Font_Size"/>
    </widget>
+   <widget class="QMenu" name="menuUse_Ship">
+    <property name="title">
+     <string>Use Ship</string>
+    </property>
+   </widget>
    <addaction name="menuFile"/>
    <addaction name="menuOptions"/>
    <addaction name="menuFormat"/>
+   <addaction name="menuUse_Ship"/>
   </widget>
   <widget class="QStatusBar" name="statusbar"/>
   <action name="actionSet_logfile_location">
@@ -287,11 +198,6 @@
    </property>
    <property name="text">
     <string>32pt</string>
-   </property>
-  </action>
-  <action name="actionUse_Ship">
-   <property name="text">
-    <string>Use Ship</string>
    </property>
   </action>
   <action name="action1_Day">

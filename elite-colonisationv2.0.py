@@ -56,11 +56,11 @@ class LogFileDialogClass(QDialog):
     def getFileSettings(self):
         if os.path.exists("settings.txt"):
             with open("settings.txt", "r") as f:
-                testFileLine = f.readline()
-                if testFileLine.startswith("Folder_location:"):
-                    self.FileNamelineEdit.setText(testFileLine.split("Folder_location: ",1)[1].strip())
-                    print("found default folder:", testFileLine.split("Folder_location: ",1)[1].strip())
-
+                testFileLine = f.readlines()
+                for line in testFileLine:
+                    if line.startswith("Folder_location:"):
+                        self.FileNamelineEdit.setText(line.split("Folder_location: ",1)[1].strip())
+                        print("found default folder:", line.split("Folder_location: ",1)[1].strip())
 
 
 class UI(QMainWindow):
@@ -78,6 +78,8 @@ class UI(QMainWindow):
         self.action100_Days.triggered.connect(lambda:self.setLogfileLoadRange(4))
 
         self.actionQuit.triggered.connect(lambda:self.saveAndQuit())
+
+        self.getFileSettings()
 
     def showLogfileDialog(self):
         print("showing log file now... ", type(self.LogFileDialog))
@@ -114,10 +116,56 @@ class UI(QMainWindow):
                 self.olderThanNumDays = 0
         return self.olderThanNumDays
 
+    def getFileSettings(self):
+        if os.path.exists("settings.txt"):
+            with open("settings.txt", "r") as f:
+                testFileLine = f.readlines()
+                for line in testFileLine:
+                    if line.startswith("Load_time_selection:"):
+                        print("Found time in settings")
+                        loadTimeSelect = int(line.split("Load_time_selection: ",1)[1].strip())
+                        print("Loading from time:", loadTimeSelect)
+                        match loadTimeSelect:
+                            case 10000:
+                                self.actionAll.setChecked(True)
+                            case 1000:
+                                self.action1_Day.setChecked(True)
+                            case 100:
+                                self.action1_Week.setChecked(True)
+                            case 10:
+                                self.action1_Month.setChecked(True)
+                            case 1:
+                                self.action100_Days.setChecked(True)
+                    if line.startswith("Hide_resources:"):
+                        print("Found checkbox in settings \'"+ line.split("Hide_resources: ",1)[1].strip()+"\'")
+                        if isinstance(int(line.split("Hide_resources: ",1)[1].strip()), int):
+                            hideBoxIsChecked = bool(int(line.split("Hide_resources: ",1)[1].strip()))
+                            self.actionHide_Finished_Resources.setChecked(hideBoxIsChecked)
+                    if line.startswith("Hide_notes:"):
+                        print("Found checkbox in settings \'"+ line.split("Hide_notes: ",1)[1].strip()+"\'")
+                        if isinstance(int(line.split("Hide_notes: ",1)[1].strip()), int):
+                            hideBoxIsChecked = bool(int(line.split("Hide_notes: ",1)[1].strip()))
+                            self.actionHide_Notes.setChecked(hideBoxIsChecked)
+                    if line.startswith("Table_size:"):
+                        print("Found table size in settings")
+                        if isinstance(int(line.split("Table_size: ",1)[1].strip()), int):
+                            tableSizeIndex = int(line.split("Table_size: ",1)[1].strip())
+                            #set actions, action12pt_2, action14pt_2, action16pt_2, action20pt_2, action32pt_2
+
     def saveAndQuit(self):
         with open("settings.txt", "w") as f:
             f.write("Folder_location: ")
             f.write(self.LogFileDialog.FileNamelineEdit.text())
+            f.write("\nLoad_time_selection: ")
+            f.write(str(int(self.actionAll.isChecked()))
+                + str(int(self.action1_Day.isChecked()))
+                + str(int(self.action1_Week.isChecked()))
+                + str(int(self.action1_Month.isChecked()))
+                + str(int(self.action100_Days.isChecked())))
+            f.write("\nHide_resources: ")
+            f.write(str(int(self.actionHide_Finished_Resources.isChecked())))
+            f.write("\nHide_notes: ")
+            f.write(str(int(self.actionHide_Notes.isChecked())))
         sys.exit()
 
 
