@@ -14,7 +14,7 @@
    <string>CMDR Roescoe's Colonisation App V2</string>
   </property>
   <property name="styleSheet">
-   <string notr="true">background-color: black; color: snow;</string>
+   <string notr="true">background-color: rgb(0, 0, 0); color: snow;</string>
   </property>
   <widget class="QWidget" name="centralwidget">
    <widget class="QWidget" name="layoutWidget">
@@ -29,6 +29,10 @@
     <layout class="QGridLayout" name="gridLayout">
      <item row="1" column="2">
       <widget class="QPushButton" name="total_need">
+       <property name="styleSheet">
+        <string notr="true">QPushButton {background-color: rgb(21, 30, 61);}
+QPushButton:hover {background-color: rgb(24, 90, 0);}</string>
+       </property>
        <property name="text">
         <string>Total Need</string>
        </property>
@@ -50,6 +54,10 @@
      </item>
      <item row="0" column="4">
       <widget class="QPushButton" name="update">
+       <property name="styleSheet">
+        <string notr="true">QPushButton {background-color: #7c0a02;}
+QPushButton:hover {background-color: rgb(24, 90, 0);}</string>
+       </property>
        <property name="text">
         <string>Update</string>
        </property>
@@ -64,6 +72,10 @@
      </item>
      <item row="1" column="0">
       <widget class="QPushButton" name="category">
+       <property name="styleSheet">
+        <string notr="true">QPushButton {background-color: rgb(21, 30, 61);}
+QPushButton:hover {background-color: rgb(24, 90, 0);}</string>
+       </property>
        <property name="text">
         <string>Category</string>
        </property>
@@ -71,6 +83,10 @@
      </item>
      <item row="1" column="1">
       <widget class="QPushButton" name="resource">
+       <property name="styleSheet">
+        <string notr="true">QPushButton {background-color: rgb(21, 30, 61);}
+QPushButton:hover {background-color: rgb(24, 90, 0);}</string>
+       </property>
        <property name="text">
         <string>Resource</string>
        </property>
@@ -88,6 +104,9 @@
      </item>
      <item row="1" column="4">
       <widget class="QLabel" name="remaining_column_label">
+       <property name="styleSheet">
+        <string notr="true"/>
+       </property>
        <property name="text">
         <string>Trips Remaining</string>
        </property>
@@ -102,6 +121,10 @@
      </item>
      <item row="1" column="3">
       <widget class="QPushButton" name="current_need">
+       <property name="styleSheet">
+        <string notr="true">QPushButton {background-color: rgb(21, 30, 61);}
+QPushButton:hover {background-color: rgb(24, 90, 0);}</string>
+       </property>
        <property name="text">
         <string>Current Need</string>
        </property>

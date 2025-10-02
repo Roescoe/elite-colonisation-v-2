@@ -27,8 +27,6 @@ import ctypes
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-
-
 class LogFileDialogClass(QDialog):
     def __init__(self, *args, **kwargs):
         super(LogFileDialogClass, self).__init__()
@@ -83,7 +81,6 @@ class UI(QMainWindow):
         self.action1_Week.triggered.connect(lambda:self.setLogfileLoadRange(2))
         self.action1_Month.triggered.connect(lambda:self.setLogfileLoadRange(3))
         self.action100_Days.triggered.connect(lambda:self.setLogfileLoadRange(4))
-
         self.actionQuit.triggered.connect(lambda:self.saveAndQuit())
 
         self.getFileSettings()
@@ -174,8 +171,6 @@ class UI(QMainWindow):
             f.write("\nHide_notes: ")
             f.write(str(int(self.actionHide_Notes.isChecked())))
         sys.exit()
-
-
 
 if __name__ == '__main__':
     app = QApplication(sys.argv)
