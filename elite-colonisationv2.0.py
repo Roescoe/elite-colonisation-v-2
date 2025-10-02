@@ -1,6 +1,6 @@
 from PyQt6.QtCore import Qt
 from PyQt6.QtWidgets import *
-from PyQt6 import uic
+from PyQt6 import uic, QtGui
 import sys
 import os
 import platform
@@ -9,6 +9,7 @@ import ast
 import time
 import copy
 import pickle
+import ctypes
 
 # This is a tool to print out Elite Dangerous colonization data pulled from the user's logfiles
 # Copyright (C) 2025 Roescoe
@@ -26,6 +27,8 @@ import pickle
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
+
+
 class LogFileDialogClass(QDialog):
     def __init__(self, *args, **kwargs):
         super(LogFileDialogClass, self).__init__()
@@ -38,9 +41,11 @@ class LogFileDialogClass(QDialog):
 
     def openFileSystem(self):
         defaultFileDir = ''
+        myappid = 'roescoe.colonisation.organisation.application'
 
         if(platform.system() == 'Windows'):
             defaultFileDir = os.path.expandvars(r"C:\Users\$USERNAME") + r'\Saved Games\Frontier Developments\Elite Dangerous'
+            ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID(myappid)
         elif(platform.system() == 'Linux'):
             defaultFileDir = os.path.expanduser("~") + '/.local/share/Steam/steamapps/compatdata/359320/pfx/drive_c/users/steamuser/Saved Games/Frontier Developments/Elite Dangerous'
         else:
@@ -67,6 +72,8 @@ class UI(QMainWindow):
     def __init__(self, *args, **kwargs):
         super(UI, self).__init__()
         uic.loadUi('elite-colonisationv2.0.ui', self)
+        self.setWindowIcon(QtGui.QIcon('ColoniseLogo.png'))
+        app.setWindowIcon(QtGui.QIcon('ColoniseLogo.png'))
         self.show()
         self.LogFileDialog = LogFileDialogClass()
 
