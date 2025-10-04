@@ -4,12 +4,13 @@ from PyQt6 import uic, QtGui
 import sys
 import os
 import platform
+import ctypes
 import json
 import ast
 import time
-import copy
-import pickle
-import ctypes
+from operator import itemgetter
+# import copy
+# import pickle
 
 # This is a tool to print out Elite Dangerous colonization data pulled from the user's logfiles
 # Copyright (C) 2025 Roescoe
@@ -69,28 +70,41 @@ class LogFileDialogClass(QDialog):
 class UI(QMainWindow):
     def __init__(self, *args, **kwargs):
         super(UI, self).__init__()
+        #properties
+        self.olderThanNumDays = 0
+        self.logfiles = []
+        self.uniqueStations = [("","")]
+        self.MarketIDs = []
+        self.tempCount = 0 #delete me!!!!
+
+        #initialize windows
         uic.loadUi('elite-colonisationv2.0.ui', self)
         self.setWindowIcon(QtGui.QIcon('ColoniseLogo.png'))
         app.setWindowIcon(QtGui.QIcon('ColoniseLogo.png'))
         self.show()
         self.LogFileDialog = LogFileDialogClass()
-
-        self.actionSet_logfile_location.triggered.connect(lambda:self.showLogfileDialog())
-        self.actionAll.triggered.connect(lambda:self.setLogfileLoadRange(0))
-        self.action1_Day.triggered.connect(lambda:self.setLogfileLoadRange(1))
-        self.action1_Week.triggered.connect(lambda:self.setLogfileLoadRange(2))
-        self.action1_Month.triggered.connect(lambda:self.setLogfileLoadRange(3))
-        self.action100_Days.triggered.connect(lambda:self.setLogfileLoadRange(4))
-        self.actionQuit.triggered.connect(lambda:self.saveAndQuit())
-
         self.getFileSettings()
 
+        #set up stuff
+        # self.getLogFileData()
+
+        #buttons
+        self.actionSet_logfile_location.triggered.connect(lambda:self.showLogfileDialog())
+        self.actionAll.triggered.connect(lambda:self.setLogfileLoadRange(10000))
+        self.action1_Day.triggered.connect(lambda:self.setLogfileLoadRange(1000))
+        self.action1_Week.triggered.connect(lambda:self.setLogfileLoadRange(100))
+        self.action1_Month.triggered.connect(lambda:self.setLogfileLoadRange(10))
+        self.action100_Days.triggered.connect(lambda:self.setLogfileLoadRange(1))
+        self.actionQuit.triggered.connect(lambda:self.saveAndQuit())
+
     def showLogfileDialog(self):
-        print("showing log file now... ", type(self.LogFileDialog))
+        print("showing log file now... ")
         self.LogFileDialog.exec()
 
-    def setLogfileLoadRange(self, logfileRange):
-        self.olderThanNumDays = 0
+    def setLogfileLoadRange(self, loadTimeSelect):
+        
+        # tuple: Timestamp, Name
+        
         currentTime = time.time()
 
         self.actionAll.setChecked(False)
@@ -98,29 +112,32 @@ class UI(QMainWindow):
         self.action1_Week.setChecked(False)
         self.action1_Month.setChecked(False)
         self.action100_Days.setChecked(False)
-        print("The time situation: ", logfileRange)
+        print("The time situation: ", loadTimeSelect)
 
-        match logfileRange:
-            case 0:
-                self.olderThanNumDays = 0
+        match loadTimeSelect:
+            case 10000:
                 self.actionAll.setChecked(True)
-            case 1:
-                self.olderThanNumDays = currentTime - 3600*24*1
+                self.olderThanNumDays = 0
+            case 1000:
                 self.action1_Day.setChecked(True)
-            case 2:
-                self.olderThanNumDays = currentTime - 3600*24*7
+                self.olderThanNumDays = currentTime - 3600*24*1
+            case 100:
                 self.action1_Week.setChecked(True)
-            case 3:
-                self.olderThanNumDays = currentTime - 3600*24*30
+                self.olderThanNumDays = currentTime - 3600*24*7
+            case 10:
                 self.action1_Month.setChecked(True)
-            case 4:
-                self.olderThanNumDays = currentTime - 3600*24*100
+                self.olderThanNumDays = currentTime - 3600*24*30
+            case 1:
                 self.action100_Days.setChecked(True)
+                self.olderThanNumDays = currentTime - 3600*24*100
             case _:
                 self.olderThanNumDays = 0
+
+        self.getLogFileData()
         return self.olderThanNumDays
 
     def getFileSettings(self):
+        loadTimeSelect = 0
         if os.path.exists("settings.txt"):
             with open("settings.txt", "r") as f:
                 testFileLine = f.readlines()
@@ -129,17 +146,7 @@ class UI(QMainWindow):
                         print("Found time in settings")
                         loadTimeSelect = int(line.split("Load_time_selection: ",1)[1].strip())
                         print("Loading from time:", loadTimeSelect)
-                        match loadTimeSelect:
-                            case 10000:
-                                self.actionAll.setChecked(True)
-                            case 1000:
-                                self.action1_Day.setChecked(True)
-                            case 100:
-                                self.action1_Week.setChecked(True)
-                            case 10:
-                                self.action1_Month.setChecked(True)
-                            case 1:
-                                self.action100_Days.setChecked(True)
+                        self.setLogfileLoadRange(loadTimeSelect)
                     if line.startswith("Hide_resources:"):
                         print("Found checkbox in settings \'"+ line.split("Hide_resources: ",1)[1].strip()+"\'")
                         if isinstance(int(line.split("Hide_resources: ",1)[1].strip()), int):
@@ -155,6 +162,84 @@ class UI(QMainWindow):
                         if isinstance(int(line.split("Table_size: ",1)[1].strip()), int):
                             tableSizeIndex = int(line.split("Table_size: ",1)[1].strip())
                             #set actions, action12pt_2, action14pt_2, action16pt_2, action20pt_2, action32pt_2
+
+    def getLogFileData(self):
+        self.stationList.clear()
+        print("Starting logfile gathering")
+        self.findLogfiles()
+        for logfile in self.logfiles:
+            self.readLogFile(logfile)
+
+        if self.uniqueStations:
+            for station in self.uniqueStations:
+                if station[1]:
+                    print("The Station being printed on the combobox: ", station[1])
+                    self.stationList.addItem(str(station[1]))
+        self.uniqueStations.clear()
+        
+
+    def findLogfiles(self):
+        folderdir = self.LogFileDialog.FileNamelineEdit.text()
+        createTime = []
+        logFileList = []
+
+        print(f"Getting files from ", {self.olderThanNumDays}, "secs ago, at", {folderdir})
+        for path, dirc, files in os.walk(folderdir):
+            for name in files:
+                if name.endswith('.log'):
+                    if os.path.getctime(os.path.join(path, name)) >= self.olderThanNumDays:
+                        logFileList.append(os.path.join(path, name))
+                        createTime.append(os.path.getctime(os.path.join(path, name)))
+        logFileListSortedPairs = sorted(zip(createTime,logFileList))
+        self.logfiles = [x for _, x in logFileListSortedPairs]
+        self.logfiles.sort(reverse = True)
+
+    def readLogFile(self, logfile):
+        self.populateStationList(logfile)
+        
+
+    def populateStationList(self, logfile):
+        stationStamp = ("","")
+        with open(logfile, "r", encoding='iso-8859-1') as f:
+            for line in f:
+                rawLine = json.loads(line)
+                if "StationName" in rawLine and "MarketID" in rawLine:
+                    # print("how many stations? ", len(self.uniqueStations))
+                    if self.uniqueStations:
+                        if not any(station[1] == rawLine["StationName"] for station in self.uniqueStations):
+                            if rawLine["StationName"].startswith("$EXT_PANEL_"):
+                                print("Found an SCS")
+                                if "StarSystem" in rawLine:
+                                    if not any(scs[1] == rawLine["StarSystem"] + ": " + rawLine["StationName"].split("$EXT_PANEL_",1)[1] for scs in self.uniqueStations):
+                                        stationStamp = (rawLine["timestamp"], rawLine["StationName"])
+                                        self.MarketIDs.append(rawLine["MarketID"])
+                                        print("Appended: ", rawLine["StationName"])
+                            else:
+                                stationStamp = (rawLine["timestamp"], rawLine["StationName"])
+                                self.MarketIDs.append(rawLine["MarketID"])
+                                print("Appended: ", rawLine["StationName"])
+                            # self.uniqueStations.append(stationStamp)
+                            
+                            print("the lenGTH: ", len(self.uniqueStations))
+                        else:
+                            # print("Yes! already have: ", rawLine["StationName"])
+                            pass
+                    else: #put the first station in always
+                        stationStamp = (rawLine["timestamp"], rawLine["StationName"])
+                if "ColonisationConstructionDepot" in rawLine and "MarketID" in rawLine:
+                    pass
+                if all(stationStamp):
+                    print("The station to be added to properties: ", type(stationStamp[1]))
+                    if stationStamp[1].startswith("$EXT_PANEL_") and "StarSystem" in rawLine:
+                        stationStamp = stationStamp[0], rawLine["StarSystem"] + ": " + rawLine["StationName"].split("$EXT_PANEL_",1)[1]
+                    self.uniqueStations.append(stationStamp)
+                stationStamp = ("","")
+            
+        print(self.MarketIDs)
+
+        
+
+
 
     def saveAndQuit(self):
         with open("settings.txt", "w") as f:
