@@ -9,8 +9,8 @@ import json
 import ast
 import time
 from operator import itemgetter
+import pickle
 # import copy
-# import pickle
 
 # This is a tool to print out Elite Dangerous colonization data pulled from the user's logfiles
 # Copyright (C) 2025 Roescoe
@@ -72,9 +72,9 @@ class UI(QMainWindow):
         super(UI, self).__init__()
         #properties
         self.olderThanNumDays = 0
+        self.allTextSize = 0
         self.logfiles = []
-        self.uniqueStations = [("","")]
-        self.MarketIDs = []
+        self.uniqueStations = []
         self.tempCount = 0 #delete me!!!!
 
         #initialize windows
@@ -86,7 +86,9 @@ class UI(QMainWindow):
         self.getFileSettings()
 
         #set up stuff
-        # self.getLogFileData()
+        self.getLogFileData()
+        self.populateStationList()
+        # print(self.uniqueStations)
 
         #buttons
         self.actionSet_logfile_location.triggered.connect(lambda:self.showLogfileDialog())
@@ -95,6 +97,12 @@ class UI(QMainWindow):
         self.action1_Week.triggered.connect(lambda:self.setLogfileLoadRange(100))
         self.action1_Month.triggered.connect(lambda:self.setLogfileLoadRange(10))
         self.action100_Days.triggered.connect(lambda:self.setLogfileLoadRange(1))
+        self.action12pt_2.triggered.connect(lambda:self.setTextSize(10000))
+        self.action14pt_2.triggered.connect(lambda:self.setTextSize(1000))
+        self.action16pt_2.triggered.connect(lambda:self.setTextSize(100))
+        self.action20pt_2.triggered.connect(lambda:self.setTextSize(10))
+        self.action32pt_2.triggered.connect(lambda:self.setTextSize(1))
+        self.stationList.currentIndexChanged.connect(lambda:self.displayColony(self.stationList.currentIndex()))
         self.actionQuit.triggered.connect(lambda:self.saveAndQuit())
 
     def showLogfileDialog(self):
@@ -103,8 +111,6 @@ class UI(QMainWindow):
 
     def setLogfileLoadRange(self, loadTimeSelect):
         
-        # tuple: Timestamp, Name
-        
         currentTime = time.time()
 
         self.actionAll.setChecked(False)
@@ -112,7 +118,6 @@ class UI(QMainWindow):
         self.action1_Week.setChecked(False)
         self.action1_Month.setChecked(False)
         self.action100_Days.setChecked(False)
-        print("The time situation: ", loadTimeSelect)
 
         match loadTimeSelect:
             case 10000:
@@ -133,8 +138,32 @@ class UI(QMainWindow):
             case _:
                 self.olderThanNumDays = 0
 
-        self.getLogFileData()
-        return self.olderThanNumDays
+    def setTextSize(self,textsize):
+
+        self.action12pt_2.setChecked(False)
+        self.action14pt_2.setChecked(False)
+        self.action16pt_2.setChecked(False)
+        self.action20pt_2.setChecked(False)
+        self.action32pt_2.setChecked(False)
+
+        match textsize:
+            case 10000:
+                self.action12pt_2.setChecked(True)
+                self.allTextSize = 12
+            case 1000:
+                self.action14pt_2.setChecked(True)
+                self.allTextSize = 14
+            case 100:
+                self.action16pt_2.setChecked(True)
+                self.allTextSize = 16
+            case 10:
+                self.action20pt_2.setChecked(True)
+                self.allTextSize = 20
+            case 1:
+                self.action32pt_2.setChecked(True)
+                self.allTextSize = 32
+            case _:
+                self.action14pt_2 = 14
 
     def getFileSettings(self):
         loadTimeSelect = 0
@@ -147,6 +176,11 @@ class UI(QMainWindow):
                         loadTimeSelect = int(line.split("Load_time_selection: ",1)[1].strip())
                         print("Loading from time:", loadTimeSelect)
                         self.setLogfileLoadRange(loadTimeSelect)
+                    if line.startswith("Table_size:"):
+                        print("Found table size in settings")
+                        if isinstance(int(line.split("Table_size: ",1)[1].strip()), int):
+                            tableSizeIndex = int(line.split("Table_size: ",1)[1].strip())
+                            self.setTextSize(tableSizeIndex)
                     if line.startswith("Hide_resources:"):
                         print("Found checkbox in settings \'"+ line.split("Hide_resources: ",1)[1].strip()+"\'")
                         if isinstance(int(line.split("Hide_resources: ",1)[1].strip()), int):
@@ -157,25 +191,17 @@ class UI(QMainWindow):
                         if isinstance(int(line.split("Hide_notes: ",1)[1].strip()), int):
                             hideBoxIsChecked = bool(int(line.split("Hide_notes: ",1)[1].strip()))
                             self.actionHide_Notes.setChecked(hideBoxIsChecked)
-                    if line.startswith("Table_size:"):
-                        print("Found table size in settings")
-                        if isinstance(int(line.split("Table_size: ",1)[1].strip()), int):
-                            tableSizeIndex = int(line.split("Table_size: ",1)[1].strip())
-                            #set actions, action12pt_2, action14pt_2, action16pt_2, action20pt_2, action32pt_2
+        if os.path.exists("stationList.pickle"):
+            with open("stationList.pickle", 'rb') as st:
+                self.uniqueStations = pickle.load(st)
+            self.populateStationList()
+
 
     def getLogFileData(self):
-        self.stationList.clear()
         print("Starting logfile gathering")
         self.findLogfiles()
         for logfile in self.logfiles:
             self.readLogFile(logfile)
-
-        if self.uniqueStations:
-            for station in self.uniqueStations:
-                if station[1]:
-                    print("The Station being printed on the combobox: ", station[1])
-                    self.stationList.addItem(str(station[1]))
-        self.uniqueStations.clear()
         
 
     def findLogfiles(self):
@@ -192,54 +218,67 @@ class UI(QMainWindow):
                         createTime.append(os.path.getctime(os.path.join(path, name)))
         logFileListSortedPairs = sorted(zip(createTime,logFileList))
         self.logfiles = [x for _, x in logFileListSortedPairs]
+        for printMeNow in logFileListSortedPairs:
+            print("logFileListSortedPairs: ",printMeNow[1].split("Journal.",1)[1])
         self.logfiles.sort(reverse = True)
+        for logfile in self.logfiles:
+            print("self.logfiles: ",logfile.split("Journal.",1)[1])
 
     def readLogFile(self, logfile):
-        self.populateStationList(logfile)
-        
+        # TODO only call on first pass or pass only latest file
+        self.getAllLogFileData(logfile)
 
-    def populateStationList(self, logfile):
-        stationStamp = ("","")
-        with open(logfile, "r", encoding='iso-8859-1') as f:
-            for line in f:
+
+
+
+    def getAllLogFileData(self, logfile):
+        isUnique = True
+        print("Reading logfile: ", logfile.split("Journal.",1)[1])
+        with open(logfile, "r", encoding='iso-8859-1') as f1, open("importantLogs.txt","w", encoding='iso-8859-1') as f2:
+            for line in f1:
                 rawLine = json.loads(line)
-                if "StationName" in rawLine and "MarketID" in rawLine:
-                    # print("how many stations? ", len(self.uniqueStations))
-                    if self.uniqueStations:
-                        if not any(station[1] == rawLine["StationName"] for station in self.uniqueStations):
-                            if rawLine["StationName"].startswith("$EXT_PANEL_"):
-                                print("Found an SCS")
-                                if "StarSystem" in rawLine:
-                                    if not any(scs[1] == rawLine["StarSystem"] + ": " + rawLine["StationName"].split("$EXT_PANEL_",1)[1] for scs in self.uniqueStations):
-                                        stationStamp = (rawLine["timestamp"], rawLine["StationName"])
-                                        self.MarketIDs.append(rawLine["MarketID"])
-                                        print("Appended: ", rawLine["StationName"])
-                            else:
-                                stationStamp = (rawLine["timestamp"], rawLine["StationName"])
-                                self.MarketIDs.append(rawLine["MarketID"])
-                                print("Appended: ", rawLine["StationName"])
-                            # self.uniqueStations.append(stationStamp)
-                            
-                            print("the lenGTH: ", len(self.uniqueStations))
-                        else:
-                            # print("Yes! already have: ", rawLine["StationName"])
-                            pass
-                    else: #put the first station in always
-                        stationStamp = (rawLine["timestamp"], rawLine["StationName"])
-                if "ColonisationConstructionDepot" in rawLine and "MarketID" in rawLine:
-                    pass
-                if all(stationStamp):
-                    print("The station to be added to properties: ", type(stationStamp[1]))
-                    if stationStamp[1].startswith("$EXT_PANEL_") and "StarSystem" in rawLine:
-                        stationStamp = stationStamp[0], rawLine["StarSystem"] + ": " + rawLine["StationName"].split("$EXT_PANEL_",1)[1]
-                    self.uniqueStations.append(stationStamp)
-                stationStamp = ("","")
-            
-        print(self.MarketIDs)
+                # print("LogFile: ",logfile)
+                if "ConstructionProgress" in rawLine:
+                    # print("Found a construction landing")
+                    f2.write(str(rawLine)+'\n')
+                if "Loadout" in rawLine.values():
+                    print("Found a ship")
+                    f2.write(str(rawLine)+'\n')
+                if "Docked" in rawLine.values():
+                    isUnique = True
+                    for stationIndex, station in enumerate(self.uniqueStations):
+                        print()
+                        if rawLine["MarketID"] == station[0]:
+                            print("Found same")
+                            print("The station list: ",self.uniqueStations[stationIndex])
+                            # self.uniqueStations[stationIndex][2] = rawLine["timestamp"]
+                            isUnique = False
+                            break
+                    if isUnique == True:
+                        if rawLine["StationName"].startswith("$EXT_PANEL_"):
+                            cleanStationName = rawLine["StarSystem"] + ": " + rawLine["StationName"].split("$EXT_PANEL_",1)[1] 
+                        else:    
+                            cleanStationName = rawLine["StationName"]
+                        self.uniqueStations.append([rawLine["MarketID"], cleanStationName, rawLine["timestamp"]])
 
-        
+          
 
 
+
+        with open("stationList.pickle", 'wb') as st:
+            pickle.dump(self.uniqueStations, st)
+
+        self.populateStationList()
+
+    def populateStationList(self):
+        self.stationList.clear()
+        if self.uniqueStations:
+            for station in self.uniqueStations:
+                self.stationList.addItem(str(station[1]))
+
+    def displayColony(self, selectedColony):
+
+        pass
 
     def saveAndQuit(self):
         with open("settings.txt", "w") as f:
@@ -251,6 +290,12 @@ class UI(QMainWindow):
                 + str(int(self.action1_Week.isChecked()))
                 + str(int(self.action1_Month.isChecked()))
                 + str(int(self.action100_Days.isChecked())))
+            f.write("\nTable_size: ")
+            f.write(str(int(self.action12pt_2.isChecked()))
+                + str(int(self.action14pt_2.isChecked()))
+                + str(int(self.action16pt_2.isChecked()))
+                + str(int(self.action20pt_2.isChecked()))
+                + str(int(self.action32pt_2.isChecked())))
             f.write("\nHide_resources: ")
             f.write(str(int(self.actionHide_Finished_Resources.isChecked())))
             f.write("\nHide_notes: ")
