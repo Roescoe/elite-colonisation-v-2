@@ -41,7 +41,8 @@ QPushButton:hover {background-color: rgb(24, 90, 0);}</string>
      <item row="1" column="4">
       <widget class="QLabel" name="remaining_column_label">
        <property name="styleSheet">
-        <string notr="true"/>
+        <string notr="true">QPushButton {background-color: rgb(20, 28, 160);}
+QPushButton:hover {background-color: rgb(24, 90, 0);}</string>
        </property>
        <property name="text">
         <string>Trips Remaining</string>
@@ -51,7 +52,7 @@ QPushButton:hover {background-color: rgb(24, 90, 0);}</string>
      <item row="1" column="3">
       <widget class="QPushButton" name="current_need">
        <property name="styleSheet">
-        <string notr="true">QPushButton {background-color: rgb(21, 30, 61);}
+        <string notr="true">QPushButton {background-color: rgb(20, 28, 160);}
 QPushButton:hover {background-color: rgb(24, 90, 0);}</string>
        </property>
        <property name="text">
@@ -60,12 +61,17 @@ QPushButton:hover {background-color: rgb(24, 90, 0);}</string>
       </widget>
      </item>
      <item row="0" column="0" colspan="4">
-      <widget class="QComboBox" name="stationList"/>
+      <widget class="QComboBox" name="stationList">
+       <property name="styleSheet">
+        <string>QPushButton {background-color: rgb(20, 28, 160);}
+QPushButton:hover {background-color: rgb(24, 90, 0);}</string>
+       </property>
+      </widget>
      </item>
      <item row="1" column="1">
       <widget class="QPushButton" name="resource">
        <property name="styleSheet">
-        <string notr="true">QPushButton {background-color: rgb(21, 30, 61);}
+        <string notr="true">QPushButton {background-color: rgb(20, 28, 160);}
 QPushButton:hover {background-color: rgb(24, 90, 0);}</string>
        </property>
        <property name="text">
@@ -76,7 +82,7 @@ QPushButton:hover {background-color: rgb(24, 90, 0);}</string>
      <item row="1" column="2">
       <widget class="QPushButton" name="total_need">
        <property name="styleSheet">
-        <string notr="true">QPushButton {background-color: rgb(21, 30, 61);}
+        <string notr="true">QPushButton {background-color: rgb(20, 28, 160);}
 QPushButton:hover {background-color: rgb(24, 90, 0);}</string>
        </property>
        <property name="text">
@@ -87,7 +93,7 @@ QPushButton:hover {background-color: rgb(24, 90, 0);}</string>
      <item row="1" column="0">
       <widget class="QPushButton" name="category">
        <property name="styleSheet">
-        <string notr="true">QPushButton {background-color: rgb(21, 30, 61);}
+        <string notr="true">QPushButton {background-color: rgb(20, 28, 160);}
 QPushButton:hover {background-color: rgb(24, 90, 0);}</string>
        </property>
        <property name="text">
@@ -242,6 +248,7 @@ QPushButton:hover {background-color: rgb(24, 90, 0);}</string>
      <addaction name="action100_Days"/>
     </widget>
     <addaction name="menuload_no_older_than"/>
+    <addaction name="actionload_stats_on_start"/>
    </widget>
    <widget class="QMenu" name="menuFormat">
     <property name="title">
@@ -401,6 +408,14 @@ QPushButton:hover {background-color: rgb(24, 90, 0);}</string>
    </property>
    <property name="text">
     <string>1 Day</string>
+   </property>
+  </action>
+  <action name="actionload_stats_on_start">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="text">
+    <string>load stats on start</string>
    </property>
   </action>
  </widget>
