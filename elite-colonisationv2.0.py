@@ -137,6 +137,7 @@ class UI(QMainWindow):
         self.getLogFileData()
         self.setGoodsList()
         self.getScsStats()
+        self.displayColony(self.stationList.currentText())
 
         # rt = RepeatedTimer(60, self.monitor_directory) # it auto-starts, no need of rt.start()
         # try:
@@ -328,7 +329,10 @@ class UI(QMainWindow):
                             cleanStationName = rawLine["StationName"] + " (" + str(rawLine["MarketID"])+")"
                         print("Saving " +cleanStationName+" to data struc")
                         if rawLine["StationType"] == "SurfaceStation" or rawLine["StationType"] == "SpaceConstructionDepot":
-                            stationType = "colony"
+                            if "StationState" in rawLine:
+                                stationType = "constructed"
+                            else:
+                                stationType = "colony"
                         elif rawLine["StationType"] == "FleetCarrier":
                             stationType = "fleet"
                         else:
@@ -343,7 +347,6 @@ class UI(QMainWindow):
         if self.uniqueStations:
             for station in self.uniqueStations:
                 if self.eliteFileTime < station[2]:
-                    # print("the station: ",station)
                     if station[3] == "colony":
                         self.stationList.addItem(str(station[1]))
 
