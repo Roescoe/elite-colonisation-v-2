@@ -1,6 +1,7 @@
 from PyQt6.QtCore import Qt
 from PyQt6.QtWidgets import *
 from PyQt6 import uic, QtGui
+from PyQt6.QtGui import QFont
 import sys
 import os
 import platform
@@ -229,6 +230,7 @@ class UI(QMainWindow):
                 self.allTextSize = 32
             case _:
                 self.action14pt_2 = 14
+        self.displayColony(self.stationList.currentText())
 
     def getFileSettings(self):
 
@@ -424,8 +426,8 @@ class UI(QMainWindow):
         # resourceTableList.verticalHeader().setSectionResizeMode(QHeaderView.ResizeMode.Stretch)
         # resourceTableList.setSizeAdjustPolicy(QAbstractScrollArea.SizeAdjustPolicy.AdjustToContents)
         for i in range(resourceTableList.rowCount()):
-            resourceTableList.setRowHeight(i, 30)
-        
+            resourceTableList.setRowHeight(i, self.allTextSize+15)
+        resourceTableList.setFont(QFont('Arial',self.allTextSize))
         resourceTableList.setColumnWidth(0, 175)
         resourceTableList.setColumnWidth(1, 230)
         resourceTableList.setColumnWidth(2, 120)
