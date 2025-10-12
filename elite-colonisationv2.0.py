@@ -339,6 +339,7 @@ class UI(QMainWindow):
                             stationType = "other"
                         # Station format: ID, Name, time accessed, type
                         self.uniqueStations.append([rawLine["MarketID"], cleanStationName, rawLine["timestamp"], stationType])
+        self.uniqueStations = sorted(self.uniqueStations, key=lambda station:self.uniqueStations[2])
         self.populateStationList()
         self.lastFileName = logfile
 
