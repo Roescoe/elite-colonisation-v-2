@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>986</width>
-    <height>790</height>
+    <width>1001</width>
+    <height>905</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -17,59 +17,49 @@
    <string notr="true">background-color: rgb(0, 0, 0); color: snow;</string>
   </property>
   <widget class="QWidget" name="centralwidget">
+   <property name="sizePolicy">
+    <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+     <horstretch>0</horstretch>
+     <verstretch>0</verstretch>
+    </sizepolicy>
+   </property>
+   <property name="layoutDirection">
+    <enum>Qt::LeftToRight</enum>
+   </property>
    <widget class="QWidget" name="layoutWidget">
     <property name="geometry">
      <rect>
       <x>0</x>
       <y>70</y>
-      <width>631</width>
-      <height>81</height>
+      <width>1000</width>
+      <height>54</height>
      </rect>
     </property>
     <layout class="QGridLayout" name="selectAndButtons">
-     <item row="0" column="4">
-      <widget class="QPushButton" name="update">
-       <property name="styleSheet">
-        <string notr="true">QPushButton {background-color: #7c0a02;}
-QPushButton:hover {background-color: rgb(24, 90, 0);}</string>
-       </property>
-       <property name="text">
-        <string>Update</string>
-       </property>
-      </widget>
-     </item>
      <item row="1" column="4">
       <widget class="QLabel" name="remaining_column_label">
        <property name="styleSheet">
-        <string notr="true">QPushButton {background-color: rgb(20, 28, 160);}
-QPushButton:hover {background-color: rgb(24, 90, 0);}</string>
+        <string notr="true"/>
        </property>
        <property name="text">
         <string>Trips Remaining</string>
        </property>
-      </widget>
-     </item>
-     <item row="1" column="3">
-      <widget class="QPushButton" name="current_need">
-       <property name="styleSheet">
-        <string notr="true">QPushButton {background-color: rgb(20, 28, 160);}
-QPushButton:hover {background-color: rgb(24, 90, 0);}</string>
-       </property>
-       <property name="text">
-        <string>Current Need</string>
+       <property name="alignment">
+        <set>AlignCenter</set>
        </property>
       </widget>
      </item>
      <item row="0" column="0" colspan="4">
-      <widget class="QComboBox" name="stationList">
-       <property name="styleSheet">
-        <string>QPushButton {background-color: rgb(20, 28, 160);}
-QPushButton:hover {background-color: rgb(24, 90, 0);}</string>
-       </property>
-      </widget>
+      <widget class="QComboBox" name="stationList"/>
      </item>
      <item row="1" column="1">
       <widget class="QPushButton" name="resource">
+       <property name="minimumSize">
+        <size>
+         <width>230</width>
+         <height>0</height>
+        </size>
+       </property>
        <property name="styleSheet">
         <string notr="true">QPushButton {background-color: rgb(20, 28, 160);}
 QPushButton:hover {background-color: rgb(24, 90, 0);}</string>
@@ -92,6 +82,18 @@ QPushButton:hover {background-color: rgb(24, 90, 0);}</string>
      </item>
      <item row="1" column="0">
       <widget class="QPushButton" name="category">
+       <property name="sizePolicy">
+        <sizepolicy hsizetype="Minimum" vsizetype="Expanding">
+         <horstretch>0</horstretch>
+         <verstretch>0</verstretch>
+        </sizepolicy>
+       </property>
+       <property name="minimumSize">
+        <size>
+         <width>170</width>
+         <height>0</height>
+        </size>
+       </property>
        <property name="styleSheet">
         <string notr="true">QPushButton {background-color: rgb(20, 28, 160);}
 QPushButton:hover {background-color: rgb(24, 90, 0);}</string>
@@ -101,120 +103,84 @@ QPushButton:hover {background-color: rgb(24, 90, 0);}</string>
        </property>
       </widget>
      </item>
-    </layout>
-   </widget>
-   <widget class="QWidget" name="gridLayoutWidget">
-    <property name="geometry">
-     <rect>
-      <x>0</x>
-      <y>150</y>
-      <width>631</width>
-      <height>81</height>
-     </rect>
-    </property>
-    <layout class="QGridLayout" name="commodityGrid">
-     <item row="0" column="0">
-      <widget class="QScrollArea" name="scrollArea">
-       <property name="widgetResizable">
-        <bool>true</bool>
+     <item row="0" column="4">
+      <widget class="QPushButton" name="update">
+       <property name="styleSheet">
+        <string notr="true">QPushButton {background-color: #7c0a02;}
+QPushButton:hover {background-color: rgb(24, 90, 0);}</string>
        </property>
-       <widget class="QWidget" name="scrollAreaWidgetContents">
-        <property name="geometry">
-         <rect>
-          <x>0</x>
-          <y>0</y>
-          <width>627</width>
-          <height>77</height>
-         </rect>
-        </property>
-        <widget class="QLabel" name="category_label">
-         <property name="geometry">
-          <rect>
-           <x>0</x>
-           <y>16</y>
-           <width>121</width>
-           <height>21</height>
-          </rect>
-         </property>
-         <property name="text">
-          <string>TextLabel</string>
-         </property>
-        </widget>
-        <widget class="QLabel" name="resource_label">
-         <property name="geometry">
-          <rect>
-           <x>126</x>
-           <y>16</y>
-           <width>121</width>
-           <height>21</height>
-          </rect>
-         </property>
-         <property name="text">
-          <string>TextLabel</string>
-         </property>
-        </widget>
-        <widget class="QLabel" name="total_need_label">
-         <property name="geometry">
-          <rect>
-           <x>250</x>
-           <y>16</y>
-           <width>121</width>
-           <height>21</height>
-          </rect>
-         </property>
-         <property name="text">
-          <string>TextLabel</string>
-         </property>
-        </widget>
-        <widget class="QLabel" name="current_need_label">
-         <property name="geometry">
-          <rect>
-           <x>380</x>
-           <y>16</y>
-           <width>121</width>
-           <height>21</height>
-          </rect>
-         </property>
-         <property name="text">
-          <string>TextLabel</string>
-         </property>
-        </widget>
-        <widget class="QLabel" name="trips_remaining_label">
-         <property name="geometry">
-          <rect>
-           <x>510</x>
-           <y>16</y>
-           <width>121</width>
-           <height>21</height>
-          </rect>
-         </property>
-         <property name="text">
-          <string>TextLabel</string>
-         </property>
-        </widget>
-        <widget class="Line" name="line">
-         <property name="geometry">
-          <rect>
-           <x>0</x>
-           <y>0</y>
-           <width>1000</width>
-           <height>1</height>
-          </rect>
-         </property>
-         <property name="autoFillBackground">
-          <bool>false</bool>
-         </property>
-         <property name="styleSheet">
-          <string notr="true">border: 0.5px solid yellow; border-style: inset;</string>
-         </property>
-         <property name="orientation">
-          <enum>Qt::Horizontal</enum>
-         </property>
-        </widget>
-       </widget>
+       <property name="text">
+        <string>Update</string>
+       </property>
+      </widget>
+     </item>
+     <item row="1" column="3">
+      <widget class="QPushButton" name="current_need">
+       <property name="styleSheet">
+        <string notr="true">QPushButton {background-color: rgb(20, 28, 160);}
+QPushButton:hover {background-color: rgb(24, 90, 0);}</string>
+       </property>
+       <property name="text">
+        <string>Current Need</string>
+       </property>
+      </widget>
+     </item>
+     <item row="1" column="5">
+      <widget class="QLabel" name="end_space">
+       <property name="minimumSize">
+        <size>
+         <width>220</width>
+         <height>0</height>
+        </size>
+       </property>
+       <property name="text">
+        <string/>
+       </property>
       </widget>
      </item>
     </layout>
+   </widget>
+   <widget class="Line" name="line">
+    <property name="geometry">
+     <rect>
+      <x>0</x>
+      <y>125</y>
+      <width>1000</width>
+      <height>2</height>
+     </rect>
+    </property>
+    <property name="autoFillBackground">
+     <bool>false</bool>
+    </property>
+    <property name="styleSheet">
+     <string notr="true">border: 0.5px solid yellow; border-style: inset;</string>
+    </property>
+    <property name="orientation">
+     <enum>Qt::Horizontal</enum>
+    </property>
+   </widget>
+   <widget class="QWidget" name="verticalWidget" native="true">
+    <property name="geometry">
+     <rect>
+      <x>10</x>
+      <y>130</y>
+      <width>2000</width>
+      <height>2000</height>
+     </rect>
+    </property>
+    <property name="sizePolicy">
+     <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+      <horstretch>0</horstretch>
+      <verstretch>0</verstretch>
+     </sizepolicy>
+    </property>
+    <property name="sizeIncrement">
+     <size>
+      <width>0</width>
+      <height>20</height>
+     </size>
+    </property>
+    <layout class="QGridLayout" name="resourcesLayout"/>
    </widget>
   </widget>
   <widget class="QMenuBar" name="menubar">
@@ -222,7 +188,7 @@ QPushButton:hover {background-color: rgb(24, 90, 0);}</string>
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>986</width>
+     <width>1001</width>
      <height>20</height>
     </rect>
    </property>

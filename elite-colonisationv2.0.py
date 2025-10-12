@@ -119,9 +119,11 @@ class UI(QMainWindow):
         self.allTextSize = 0
         self.logfiles = []
         self.uniqueStations = []
+        self.colonies = []
         self.eliteFileTime = 0
         self.lastFileName = ''
         self.resourceTypeDict = {}
+        self.resourceTableView = QTableView()
 
         #initialize windows
         uic.loadUi('elite-colonisationv2.0.ui', self)
@@ -158,7 +160,8 @@ class UI(QMainWindow):
         self.action16pt_2.triggered.connect(lambda:self.setTextSize(100))
         self.action20pt_2.triggered.connect(lambda:self.setTextSize(10))
         self.action32pt_2.triggered.connect(lambda:self.setTextSize(1))
-        self.stationList.currentIndexChanged.connect(lambda:self.displayColony(self.stationList.currentIndex()))
+        self.actionHide_Finished_Resources.triggered.connect(lambda:self.displayColony(self.stationList.currentText()))
+        self.stationList.currentIndexChanged.connect(lambda:self.displayColony(self.stationList.currentText()))
 
         self.actionQuit.triggered.connect(lambda:self.saveAndQuit())
 
@@ -195,9 +198,9 @@ class UI(QMainWindow):
             case _:
                 self.olderThanNumDays = 0
 
-        self.deleteOldLogFile("importantLogs.txt")
         self.getEliteTime(loadTimeSelect)
         self.populateStationList()
+        self.displayColony(self.stationList.currentText())
 
     def setTextSize(self,textsize):
 
@@ -227,7 +230,8 @@ class UI(QMainWindow):
                 self.action14pt_2 = 14
 
     def getFileSettings(self):
-        loadTimeSelect = 0
+
+        self.deleteOldLogFile("importantLogs.txt")
         if os.path.exists("settings.txt"):
             with open("settings.txt", "r") as f:
                 testFileLine = f.readlines()
@@ -236,7 +240,8 @@ class UI(QMainWindow):
                         print("Found time in settings")
                         loadTimeSelect = int(line.split("Load_time_selection: ",1)[1].strip())
                         print("Loading from time:", loadTimeSelect)
-                        self.setLogfileLoadRange(loadTimeSelect)
+                        if loadTimeSelect:
+                            self.setLogfileLoadRange(loadTimeSelect)
                     if line.startswith("Table_size:"):
                         print("Found table size in settings")
                         if isinstance(int(line.split("Table_size: ",1)[1].strip()), int):
@@ -297,6 +302,8 @@ class UI(QMainWindow):
 
     def getAllLogFileData(self, logfile):
         isUnique = True
+        stationType = "other"
+
         print("Reading logfile: ", logfile.split("Journal.",1)[1])
         with open(logfile, "r", encoding='iso-8859-1') as f1, open("importantLogs.txt","a", encoding='iso-8859-1') as f2:
             for line in f1:
@@ -320,7 +327,14 @@ class UI(QMainWindow):
                         else:    
                             cleanStationName = rawLine["StationName"] + " (" + str(rawLine["MarketID"])+")"
                         print("Saving " +cleanStationName+" to data struc")
-                        self.uniqueStations.append([rawLine["MarketID"], cleanStationName, rawLine["timestamp"]])
+                        if rawLine["StationType"] == "SurfaceStation" or rawLine["StationType"] == "SpaceConstructionDepot":
+                            stationType = "colony"
+                        elif rawLine["StationType"] == "FleetCarrier":
+                            stationType = "fleet"
+                        else:
+                            stationType = "other"
+                        # Station format: ID, Name, time accessed, type
+                        self.uniqueStations.append([rawLine["MarketID"], cleanStationName, rawLine["timestamp"], stationType])
         self.populateStationList()
         self.lastFileName = logfile
 
@@ -329,11 +343,103 @@ class UI(QMainWindow):
         if self.uniqueStations:
             for station in self.uniqueStations:
                 if self.eliteFileTime < station[2]:
-                    self.stationList.addItem(str(station[1]))
+                    # print("the station: ",station)
+                    if station[3] == "colony":
+                        self.stationList.addItem(str(station[1]))
 
     def displayColony(self, selectedColony):
+        selectedMarketID = ""
+        lastMarketEntry = {}
+        qTypeItems = []
+        qResourceItems = []
+        qAmountItems = []
+        qCurrentItems = []
+        resourceTableList = QTableWidget()
 
-        pass
+        print("Filling out ", selectedColony)
+        # self.clear_layout(self.resourcesLayout)
+        if selectedColony:
+            selectedMarketID = int(selectedColony.split("(",1)[1].split(")",1)[0])
+
+        print("selected ID:"+str(selectedMarketID))
+        if os.path.exists("importantLogs.txt"):
+            with open("importantLogs.txt","r", encoding='iso-8859-1') as f:
+                for line in f:
+                    dictLine = ast.literal_eval(line)
+                    # for station in self.uniqueStations:
+                    # print("Reading from station: ", dictLine["MarketID"])
+                    if "MarketID" in dictLine:
+                        if dictLine["MarketID"] == selectedMarketID:
+                            if lastMarketEntry:
+                                if dictLine["timestamp"] > lastMarketEntry["timestamp"]:
+                                    lastMarketEntry = dictLine
+                            else:
+                                lastMarketEntry = dictLine
+        print("Latest Entry:", lastMarketEntry)
+        if "ResourcesRequired" in lastMarketEntry:
+            resourceTableList.setRowCount(len(lastMarketEntry["ResourcesRequired"]))
+            resourceTableList.setColumnCount(5)
+            print(f'The last one: {len(lastMarketEntry["ResourcesRequired"])}')
+            for i in range(len(lastMarketEntry["ResourcesRequired"])):
+                
+                total_need = lastMarketEntry["ResourcesRequired"][i]["RequiredAmount"]
+                current_provided = lastMarketEntry["ResourcesRequired"][i]["ProvidedAmount"]
+                current_need = int(total_need) - int(current_provided)
+                print(f"Provided {current_provided}, Needed {current_need}")
+                if current_need == 0 and self.actionHide_Finished_Resources.isChecked():
+                    continue
+
+                qTypeItem = QTableWidgetItem()
+                qResourceItem = QTableWidgetItem()
+                qAmountItem = QTableWidgetItem()
+                qCurrentItem = QTableWidgetItem()
+                
+
+                qTypeItem.setText(str(self.resourceTypeDict[lastMarketEntry["ResourcesRequired"][i]["Name_Localised"]]) + " " * 5)
+                qResourceItem.setText(str(lastMarketEntry["ResourcesRequired"][i]["Name_Localised"]) + " " * 5)
+                qAmountItem.setText(str(total_need) + " " * 5)
+                qCurrentItem.setText(str(current_need) + " " * 5)
+
+                qTypeItem.setFlags(Qt.ItemFlag.ItemIsSelectable | Qt.ItemFlag.ItemIsEnabled)
+                qResourceItem.setFlags(Qt.ItemFlag.ItemIsSelectable | Qt.ItemFlag.ItemIsEnabled)
+                qAmountItem.setFlags(Qt.ItemFlag.ItemIsSelectable | Qt.ItemFlag.ItemIsEnabled)
+                qCurrentItem.setFlags(Qt.ItemFlag.ItemIsSelectable | Qt.ItemFlag.ItemIsEnabled)
+
+                qTypeItems.append(qTypeItem)
+                qResourceItems.append(qResourceItem)
+                qAmountItems.append(qAmountItem)
+                qCurrentItems.append(qCurrentItem)
+
+
+        for i, qResource in enumerate(qResourceItems):
+            resourceTableList.setItem(i, 0, qTypeItems[i])
+            resourceTableList.setItem(i, 1, qResource)
+            resourceTableList.setItem(i, 2, qAmountItems[i])
+            resourceTableList.setItem(i, 3, qCurrentItems[i])
+        # resourceTableList.horizontalHeader().setSectionResizeMode(QHeaderView.ResizeMode.Stretch)
+        # resourceTableList.verticalHeader().setSectionResizeMode(QHeaderView.ResizeMode.Stretch)
+        # resourceTableList.setSizeAdjustPolicy(QAbstractScrollArea.SizeAdjustPolicy.AdjustToContents)
+        for i in range(resourceTableList.rowCount()):
+            resourceTableList.setRowHeight(i, 30)
+        
+        resourceTableList.setColumnWidth(0, 175)
+        resourceTableList.setColumnWidth(1, 230)
+        resourceTableList.setColumnWidth(2, 120)
+        resourceTableList.horizontalHeader().setVisible(False)
+        resourceTableList.verticalHeader().setVisible(False)
+        self.resourcesLayout.setRowStretch(0, 1)
+        self.resourcesLayout.setColumnStretch(0, 1)
+        self.resourcesLayout.addWidget(resourceTableList,0,0)
+
+    def clear_layout(self, layout):
+        for i in reversed(range(layout.count())):
+            item = layout.itemAt(i)
+            print("Item to be deleted: ", item)
+            if item is not None:
+                widget = item.widget()
+                if widget is not None:
+                    widget.deleteLater()  # Safely delete the widget
+                layout.removeItem(item)  # Remove the item from the layout
 
     def monitor_directory(self):
         print("Checking for new file...")
