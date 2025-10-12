@@ -125,6 +125,7 @@ class UI(QMainWindow):
         self.lastFileName = ''
         self.resourceTypeDict = {}
         self.resourceTableView = QTableView()
+        self.resourceTableList = QTableWidget()
 
         #initialize windows
         uic.loadUi('elite-colonisationv2.0.ui', self)
@@ -230,7 +231,7 @@ class UI(QMainWindow):
                 self.allTextSize = 32
             case _:
                 self.action14pt_2 = 14
-        self.displayColony(self.stationList.currentText())
+        self.formatResourceTable()
 
     def getFileSettings(self):
 
@@ -360,7 +361,6 @@ class UI(QMainWindow):
         qResourceItems = []
         qAmountItems = []
         qCurrentItems = []
-        resourceTableList = QTableWidget()
 
         print("Filling out ", selectedColony)
         # self.clear_layout(self.resourcesLayout)
@@ -383,8 +383,8 @@ class UI(QMainWindow):
                                 lastMarketEntry = dictLine
         print("Latest Entry:", lastMarketEntry)
         if "ResourcesRequired" in lastMarketEntry:
-            resourceTableList.setRowCount(len(lastMarketEntry["ResourcesRequired"]))
-            resourceTableList.setColumnCount(5)
+            self.resourceTableList.setRowCount(len(lastMarketEntry["ResourcesRequired"]))
+            self.resourceTableList.setColumnCount(5)
             print(f'The last one: {len(lastMarketEntry["ResourcesRequired"])}')
             for i in range(len(lastMarketEntry["ResourcesRequired"])):
                 
@@ -418,24 +418,27 @@ class UI(QMainWindow):
 
 
         for i, qResource in enumerate(qResourceItems):
-            resourceTableList.setItem(i, 0, qTypeItems[i])
-            resourceTableList.setItem(i, 1, qResource)
-            resourceTableList.setItem(i, 2, qAmountItems[i])
-            resourceTableList.setItem(i, 3, qCurrentItems[i])
-        # resourceTableList.horizontalHeader().setSectionResizeMode(QHeaderView.ResizeMode.Stretch)
-        # resourceTableList.verticalHeader().setSectionResizeMode(QHeaderView.ResizeMode.Stretch)
-        # resourceTableList.setSizeAdjustPolicy(QAbstractScrollArea.SizeAdjustPolicy.AdjustToContents)
-        for i in range(resourceTableList.rowCount()):
-            resourceTableList.setRowHeight(i, self.allTextSize+15)
-        resourceTableList.setFont(QFont('Arial',self.allTextSize))
-        resourceTableList.setColumnWidth(0, 175)
-        resourceTableList.setColumnWidth(1, 230)
-        resourceTableList.setColumnWidth(2, 120)
-        resourceTableList.horizontalHeader().setVisible(False)
-        resourceTableList.verticalHeader().setVisible(False)
+            self.resourceTableList.setItem(i, 0, qTypeItems[i])
+            self.resourceTableList.setItem(i, 1, qResource)
+            self.resourceTableList.setItem(i, 2, qAmountItems[i])
+            self.resourceTableList.setItem(i, 3, qCurrentItems[i])
+        # self.resourceTableList.horizontalHeader().setSectionResizeMode(QHeaderView.ResizeMode.Stretch)
+        # self.resourceTableList.verticalHeader().setSectionResizeMode(QHeaderView.ResizeMode.Stretch)
+        # self.resourceTableList.setSizeAdjustPolicy(QAbstractScrollArea.SizeAdjustPolicy.AdjustToContents)
+        self.formatResourceTable()
+
+    def formatResourceTable(self):
+        for i in range(self.resourceTableList.rowCount()):
+            self.resourceTableList.setRowHeight(i, self.allTextSize+15)
+        self.resourceTableList.setFont(QFont('Calibri',self.allTextSize))
+        self.resourceTableList.setColumnWidth(0, 175)
+        self.resourceTableList.setColumnWidth(1, 230)
+        self.resourceTableList.setColumnWidth(2, 120)
+        self.resourceTableList.horizontalHeader().setVisible(False)
+        self.resourceTableList.verticalHeader().setVisible(False)
         self.resourcesLayout.setRowStretch(0, 1)
         self.resourcesLayout.setColumnStretch(0, 1)
-        self.resourcesLayout.addWidget(resourceTableList,0,0)
+        self.resourcesLayout.addWidget(self.resourceTableList,0,0)
 
     def clear_layout(self, layout):
         for i in reversed(range(layout.count())):
