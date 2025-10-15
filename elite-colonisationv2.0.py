@@ -410,6 +410,7 @@ class UI(QMainWindow):
         self.cargoSpace.setText(current_ship.split("(",1)[1].split(")",1)[0])
         self.setupResourceTable()
         self.formatResourceTable()
+        self.displayColonyStats()
 
     def displayColony(self):
         selectedMarketID = -1
@@ -434,6 +435,7 @@ class UI(QMainWindow):
 
         self.setupResourceTable()
         self.formatResourceTable()
+        self.displayColonyStats()
 
     def findMarketEnty(self, selectedMarketID, sourceFile):
         foundEntry = False
@@ -543,6 +545,40 @@ class UI(QMainWindow):
 
         self.scrollArea.setWidget(self.resourceTableList)
 
+    def displayColonyStats(self):
+        tripsCalc = 0
+        percentPerTrip = 0
+        totalMaterials = 0
+        stillNeeded = 0
+        percentComplete = 0
+
+        if self.resourceTableList:
+            print(f"col: {self.resourceTableList.columnCount()} and row: {self.resourceTableList.rowCount()} ")
+            for trip in range(self.resourceTableList.rowCount()):
+                if self.resourceTableList.item(trip, 4):
+                    tripsCalc += float(self.resourceTableList.item(trip, 4).text())
+                if self.resourceTableList.item(trip, 2):
+                    totalMaterials += float(self.resourceTableList.item(trip, 2).text())
+                if self.resourceTableList.item(trip, 3):
+                    stillNeeded += float(self.resourceTableList.item(trip, 3).text())
+
+        if totalMaterials > 0:
+            percentPerTrip = round(100 * int(self.cargoSpace.text()) / totalMaterials, 2)
+        if stillNeeded > 0:
+            percentComplete = round(100 * (1 - stillNeeded/totalMaterials), 2)
+
+
+        self.trips_left.setFont(QFont('Calibri',14))
+        self.percent_per_trip.setFont(QFont('Calibri',14))
+        self.total_materials.setFont(QFont('Calibri',14))
+        self.materials_still_needed.setFont(QFont('Calibri',14))
+        self.percent_complete.setFont(QFont('Calibri',14))
+
+        self.trips_left.setText(f"Trips left: {tripsCalc}")
+        self.percent_per_trip.setText(f"Percent per Trip: {percentPerTrip}%")
+        self.total_materials.setText(f"Total Materials: {totalMaterials:,}")
+        self.materials_still_needed.setText(f"Materials Still Needed: {stillNeeded:,}")
+        self.percent_complete.setText(f"Percent Complete: {percentComplete}%")
 
     def clear_layout(self, layout):
         for i in reversed(range(layout.count())):

@@ -30,15 +30,12 @@
     <property name="geometry">
      <rect>
       <x>0</x>
-      <y>70</y>
+      <y>90</y>
       <width>1000</width>
       <height>58</height>
      </rect>
     </property>
     <layout class="QGridLayout" name="selectAndButtons">
-     <item row="0" column="0" colspan="2">
-      <widget class="QComboBox" name="stationList"/>
-     </item>
      <item row="0" column="2">
       <widget class="QPushButton" name="update">
        <property name="styleSheet">
@@ -50,26 +47,10 @@ QPushButton:hover {background-color: rgb(24, 90, 0);}</string>
        </property>
       </widget>
      </item>
+     <item row="0" column="0" colspan="2">
+      <widget class="QComboBox" name="stationList"/>
+     </item>
     </layout>
-   </widget>
-   <widget class="Line" name="line">
-    <property name="geometry">
-     <rect>
-      <x>0</x>
-      <y>125</y>
-      <width>1500</width>
-      <height>2</height>
-     </rect>
-    </property>
-    <property name="autoFillBackground">
-     <bool>false</bool>
-    </property>
-    <property name="styleSheet">
-     <string notr="true">border: 0.5px solid yellow; border-style: inset;</string>
-    </property>
-    <property name="orientation">
-     <enum>Qt::Horizontal</enum>
-    </property>
    </widget>
    <widget class="QWidget" name="verticalWidget" native="true">
     <property name="geometry">
@@ -110,6 +91,31 @@ QPushButton:hover {background-color: rgb(24, 90, 0);}</string>
           <height>680</height>
          </rect>
         </property>
+        <widget class="Line" name="line">
+         <property name="geometry">
+          <rect>
+           <x>-30</x>
+           <y>0</y>
+           <width>1982</width>
+           <height>2</height>
+          </rect>
+         </property>
+         <property name="minimumSize">
+          <size>
+           <width>0</width>
+           <height>0</height>
+          </size>
+         </property>
+         <property name="autoFillBackground">
+          <bool>false</bool>
+         </property>
+         <property name="styleSheet">
+          <string notr="true">border: 0.5px solid yellow; border-style: inset;</string>
+         </property>
+         <property name="orientation">
+          <enum>Qt::Horizontal</enum>
+         </property>
+        </widget>
        </widget>
       </widget>
      </item>
@@ -118,9 +124,9 @@ QPushButton:hover {background-color: rgb(24, 90, 0);}</string>
    <widget class="QLineEdit" name="cargoSpace">
     <property name="geometry">
      <rect>
-      <x>550</x>
+      <x>670</x>
       <y>40</y>
-      <width>121</width>
+      <width>131</width>
       <height>21</height>
      </rect>
     </property>
@@ -128,17 +134,17 @@ QPushButton:hover {background-color: rgb(24, 90, 0);}</string>
    <widget class="QComboBox" name="shipList">
     <property name="geometry">
      <rect>
-      <x>550</x>
+      <x>670</x>
       <y>10</y>
       <width>131</width>
       <height>25</height>
      </rect>
     </property>
    </widget>
-   <widget class="QLabel" name="label">
+   <widget class="QLabel" name="ship_label">
     <property name="geometry">
      <rect>
-      <x>500</x>
+      <x>630</x>
       <y>10</y>
       <width>41</width>
       <height>21</height>
@@ -148,10 +154,10 @@ QPushButton:hover {background-color: rgb(24, 90, 0);}</string>
      <string>Ship:</string>
     </property>
    </widget>
-   <widget class="QLabel" name="label_2">
+   <widget class="QLabel" name="cargo_label">
     <property name="geometry">
      <rect>
-      <x>500</x>
+      <x>630</x>
       <y>40</y>
       <width>41</width>
       <height>17</height>
@@ -159,6 +165,83 @@ QPushButton:hover {background-color: rgb(24, 90, 0);}</string>
     </property>
     <property name="text">
      <string>Cargo</string>
+    </property>
+   </widget>
+   <widget class="QLabel" name="trips_left">
+    <property name="geometry">
+     <rect>
+      <x>20</x>
+      <y>0</y>
+      <width>231</width>
+      <height>21</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string/>
+    </property>
+   </widget>
+   <widget class="QLabel" name="percent_per_trip">
+    <property name="geometry">
+     <rect>
+      <x>20</x>
+      <y>30</y>
+      <width>231</width>
+      <height>21</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string/>
+    </property>
+   </widget>
+   <widget class="QLabel" name="percent_complete">
+    <property name="geometry">
+     <rect>
+      <x>310</x>
+      <y>0</y>
+      <width>291</width>
+      <height>21</height>
+     </rect>
+    </property>
+    <property name="layoutDirection">
+     <enum>Qt::LeftToRight</enum>
+    </property>
+    <property name="text">
+     <string/>
+    </property>
+    <property name="alignment">
+     <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+    </property>
+   </widget>
+   <widget class="QLabel" name="total_materials">
+    <property name="geometry">
+     <rect>
+      <x>310</x>
+      <y>30</y>
+      <width>291</width>
+      <height>21</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string/>
+    </property>
+    <property name="alignment">
+     <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+    </property>
+   </widget>
+   <widget class="QLabel" name="materials_still_needed">
+    <property name="geometry">
+     <rect>
+      <x>310</x>
+      <y>60</y>
+      <width>291</width>
+      <height>21</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string/>
+    </property>
+    <property name="alignment">
+     <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
     </property>
    </widget>
   </widget>
