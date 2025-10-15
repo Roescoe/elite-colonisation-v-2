@@ -117,14 +117,16 @@ class UI(QMainWindow):
         super(UI, self).__init__()
         #properties
         self.olderThanNumDays = 0
-        self.allTextSize = 0
+        self.allTextSize = 12
         self.logfiles = []
         self.uniqueStations = []
         self.colonies = []
         self.eliteFileTime = 0
+        self.mostRecentReadTime = 0
         self.lastFileName = ''
         self.resourceTypeDict = {}
         self.resourceTableList = QTableWidget()
+        self.lastMarketEntry = {}
         self.lastSortcolumn = 0
         self.ships = []
 
@@ -139,10 +141,10 @@ class UI(QMainWindow):
         #set up stuff
         self.getLogFileData()
         self.setGoodsList()
-        self.getScsStats()
-        self.displayColony()
         self.populateShipList()
-
+        self.updateCargoSpace()
+        self.displayColony()
+        self.getScsStats()
         # rt = RepeatedTimer(60, self.monitor_directory) # it auto-starts, no need of rt.start()
         # try:
         #     time.sleep(5) # your long-running job goes here...
@@ -168,6 +170,7 @@ class UI(QMainWindow):
         self.actionHide_Finished_Resources.triggered.connect(lambda:self.displayColony())
         self.stationList.currentIndexChanged.connect(lambda:self.displayColony())
         self.shipList.currentIndexChanged.connect(lambda:self.updateCargoSpace())
+        self.update.clicked.connect(lambda:self.getLogFileData())
 
 
         self.actionQuit.triggered.connect(lambda:self.saveAndQuit())
@@ -206,8 +209,8 @@ class UI(QMainWindow):
                 self.olderThanNumDays = 0
 
         self.getEliteTime(loadTimeSelect)
-        self.populateStationList()
-        self.displayColony()
+        # self.populateStationList()
+        self.getLogFileData()
 
     def setTextSize(self,textsize):
 
@@ -240,6 +243,7 @@ class UI(QMainWindow):
     def getFileSettings(self):
 
         self.deleteOldLogFile("importantLogs.txt")
+        self.deleteOldLogFile("currentImportantData.txt")
         if os.path.exists("settings.txt"):
             with open("settings.txt", "r") as f:
                 testFileLine = f.readlines()
@@ -280,8 +284,9 @@ class UI(QMainWindow):
         print("Starting logfile gathering")
         self.findLogfiles()
         for logfile in self.logfiles:
-            self.readLogFile(logfile)
-        
+            self.getAllLogFileData(logfile)
+        self.saveColonies("importantLogs.txt")
+        self.populateStationList()
 
     def findLogfiles(self):
         folderdir = self.LogFileDialog.FileNamelineEdit.text()
@@ -299,34 +304,48 @@ class UI(QMainWindow):
         self.logfiles = [x for _, x in logFileListSortedPairs]
         # for printMeNow in logFileListSortedPairs:
         #     print("logFileListSortedPairs: ",printMeNow[1].split("Journal.",1)[1])
-        self.logfiles.sort(reverse = True)
+        self.logfiles.sort()
+
         # for logfile in self.logfiles:
         #     print("self.logfiles: ",logfile.split("Journal.",1)[1])
-        self.lastFileName = self.logfiles[0]
-
-    def readLogFile(self, logfile):
-        # TODO only call on first pass or pass only latest file
-        self.getAllLogFileData(logfile)
 
     def getAllLogFileData(self, logfile):
         isUnique = True
         stationType = "other"
 
         print("Reading logfile: ", logfile.split("Journal.",1)[1])
-        with open(logfile, "r", encoding='iso-8859-1') as f1, open("importantLogs.txt","a", encoding='iso-8859-1') as f2, open("ships.txt","a", encoding='iso-8859-1') as f3:
+        print("logfile time: ", self.mostRecentReadTime)
+        with open(logfile, "r", encoding='iso-8859-1') as f1, open("ships.txt","a", encoding='iso-8859-1') as f3:
             for line in f1:
                 rawLine = json.loads(line)
                 # print("LogFile: ",logfile)
+                # if str(self.mostRecentReadTime) > rawLine["timestamp"]:
+                #     continue
+
+                # self.mostRecentReadTime = rawLine["timestamp"]
+                foundExistingColony = False
                 if "ConstructionProgress" in rawLine:
                     # print("Found a construction landing")
-                    f2.write(str(rawLine)+'\n')
+                    for index,colony in enumerate(self.colonies):
+
+                        # print(f'Reading: {rawLine["timestamp"]} Pre-existing: {colony["timestamp"]}')
+                        if str(rawLine["MarketID"]) == str(colony["MarketID"]):
+                            foundExistingColony = True
+                            if str(rawLine["timestamp"]) > str(colony["timestamp"]):
+                                self.colonies[index] = rawLine
+                                break
+                    if not foundExistingColony or not self.colonies:
+                        print("Found an entry in the colony table " if self.colonies else "colony table has no entries in it")
+                        self.colonies.append(rawLine)
+
+                    # f2.write(str(rawLine)+'\n')
                 if "Loadout" in rawLine.values() and int(rawLine["CargoCapacity"]) > 0:
                     # print("Found a ship")
                     f3.write(str(rawLine)+'\n')
                 if "Docked" in rawLine.values():
                     isUnique = True
-                    for stationIndex, station in enumerate(self.uniqueStations):
-                        if rawLine["MarketID"] == station[0]:
+                    for station in self.uniqueStations:
+                        if str(rawLine["MarketID"]) == str(station[0]):
                             isUnique = False
                             break
                     if isUnique == True:
@@ -346,17 +365,29 @@ class UI(QMainWindow):
                             stationType = "other"
                         # Station format: ID, Name, time accessed, type
                         self.uniqueStations.append([rawLine["MarketID"], cleanStationName, rawLine["timestamp"], stationType])
-        self.uniqueStations = sorted(self.uniqueStations, key=lambda station:self.uniqueStations[2])
-        self.populateStationList()
+
         self.lastFileName = logfile
 
+    def saveColonies(self, outputFile):
+        with open(outputFile,"w", encoding='iso-8859-1') as f2:
+            for colony in self.colonies:
+                f2.write(str(colony)+'\n')
+
     def populateStationList(self):
-        self.stationList.clear()
+        # print("Stations and timeStamps: ",self.uniqueStations)
         if self.uniqueStations:
+            self.uniqueStations = sorted(self.uniqueStations, key=lambda station:station[2], reverse=True)
+            savedIndex = self.stationList.currentIndex()
+            self.stationList.clear()
             for station in self.uniqueStations:
                 if self.eliteFileTime < station[2]:
                     if station[3] == "colony":
                         self.stationList.addItem(str(station[1]))
+            print("Index of current colony: ", savedIndex)
+            if savedIndex == -1:
+                self.stationList.setCurrentIndex(0)
+            else:
+                self.stationList.setCurrentIndex(savedIndex)
 
 
     def populateShipList(self):
@@ -371,64 +402,89 @@ class UI(QMainWindow):
 
         for ship in self.ships:
             items = [self.shipList.itemText(i) for i in range(self.shipList.count())]
-            print(f"{items}, {str(ship[1])}")
             if str(ship[1]) not in str(items):
                 self.shipList.addItem(str(f"{ship[0]} ({ship[1]})"))
-        self.updateCargoSpace()
 
     def updateCargoSpace(self):
         current_ship = self.shipList.currentText()
-        print("The selected Ship type:", type(current_ship))
         self.cargoSpace.setText(current_ship.split("(",1)[1].split(")",1)[0])
-        self.displayColony()
+        self.setupResourceTable()
+        self.formatResourceTable()
 
     def displayColony(self):
-        selectedMarketID = ""
-        lastMarketEntry = {}
-        qTypeItems = []
-        qResourceItems = []
-        qAmountItems = []
-        qCurrentItems = []
-        qTripItems = []
-        cargo = 0
-        if len(self.shipList) > 0:
-            cargo = int(self.cargoSpace.text())
-        selectedColony = self.stationList.currentText()
+        selectedMarketID = -1
 
+        selectedColony = self.stationList.currentText()
         print("Filling out ", selectedColony)
         # self.clear_layout(self.resourcesLayout)
         if selectedColony:
             selectedMarketID = int(selectedColony.split("(",1)[1].split(")",1)[0])
 
         print("selected ID:"+str(selectedMarketID))
-        if os.path.exists("importantLogs.txt"):
-            with open("importantLogs.txt","r", encoding='iso-8859-1') as f:
+
+        #TODO write to current data file also could just use other file
+        readLocation = "currentImportantData.txt"
+        if not self.findMarketEnty(selectedMarketID, readLocation):
+            print("Not found in current file")
+            readLocation = "importantLogs.txt"
+            self.findMarketEnty(selectedMarketID, readLocation)
+        else:
+            print("Found in current file")
+            pass
+
+        self.setupResourceTable()
+        self.formatResourceTable()
+
+    def findMarketEnty(self, selectedMarketID, sourceFile):
+        foundEntry = False
+        self.lastMarketEntry.clear()
+        if os.path.exists(sourceFile):
+            with open(sourceFile,"r", encoding='iso-8859-1') as f:
                 for line in f:
                     dictLine = ast.literal_eval(line)
                     # for station in self.uniqueStations:
-                    # print("Reading from station: ", dictLine["MarketID"])
                     if "MarketID" in dictLine:
+                        # print("Reading from station: ", type(dictLine["MarketID"]))
                         if dictLine["MarketID"] == selectedMarketID:
-                            if lastMarketEntry:
-                                if dictLine["timestamp"] > lastMarketEntry["timestamp"]:
-                                    lastMarketEntry = dictLine
+                            if self.lastMarketEntry:
+                                if dictLine["timestamp"] > self.lastMarketEntry["timestamp"]:
+                                    self.lastMarketEntry = dictLine
+                                    foundEntry = True
                             else:
-                                lastMarketEntry = dictLine
-        print("Latest Entry:", lastMarketEntry)
-        if "ResourcesRequired" in lastMarketEntry:
-            self.resourceTableList.setRowCount(len(lastMarketEntry["ResourcesRequired"]))
+                                self.lastMarketEntry = dictLine
+                                foundEntry = True
+        print(f"The entry we're using: {self.lastMarketEntry} was updated? {foundEntry}")
+        return foundEntry
+
+    def findFleetCarrierEntry(self, fleetCarrier, sourceFile):
+        pass
+
+    def setupResourceTable(self):
+        qTypeItems = []
+        qResourceItems = []
+        qAmountItems = []
+        qCurrentItems = []
+        qTripItems = []
+        cargo = 0
+
+        if len(self.shipList) > 0:
+            cargo = int(self.cargoSpace.text())
+        self.resourceTableList.clear()
+
+        print("Latest Entry:", self.lastMarketEntry)
+        if "ResourcesRequired" in self.lastMarketEntry:
+            self.resourceTableList.setRowCount(len(self.lastMarketEntry["ResourcesRequired"]))
             self.resourceTableList.setColumnCount(6)
-            print(f'The last one: {len(lastMarketEntry["ResourcesRequired"])}')
-            for i in range(len(lastMarketEntry["ResourcesRequired"])):
+            print(f'Num resources listed: {len(self.lastMarketEntry["ResourcesRequired"])}')
+            for i in range(len(self.lastMarketEntry["ResourcesRequired"])):
                 
-                total_need = lastMarketEntry["ResourcesRequired"][i]["RequiredAmount"]
-                current_provided = lastMarketEntry["ResourcesRequired"][i]["ProvidedAmount"]
+                total_need = self.lastMarketEntry["ResourcesRequired"][i]["RequiredAmount"]
+                current_provided = self.lastMarketEntry["ResourcesRequired"][i]["ProvidedAmount"]
                 current_need = int(total_need) - int(current_provided)
                 if cargo == 0:
                     trips_remaining = 0
                 else:
-                    trips_remaining = round(current_need/cargo, 2)
-                print(f"Provided {current_provided}, Needed {current_need}")
+                    trips_remaining = round(current_need/cargo, 1)
                 if current_need == 0 and self.actionHide_Finished_Resources.isChecked():
                     continue
 
@@ -439,10 +495,10 @@ class UI(QMainWindow):
                 qTripItem = QTableWidgetItem()
                 
 
-                qTypeItem.setText(str(self.resourceTypeDict[lastMarketEntry["ResourcesRequired"][i]["Name_Localised"]]))
-                qResourceItem.setText(str(lastMarketEntry["ResourcesRequired"][i]["Name_Localised"]))
+                qTypeItem.setText(str(self.resourceTypeDict[self.lastMarketEntry["ResourcesRequired"][i]["Name_Localised"]]))
+                qResourceItem.setText(str(self.lastMarketEntry["ResourcesRequired"][i]["Name_Localised"]))
                 qAmountItem.setText(str(total_need).rjust(5))
-                qCurrentItem.setText(str(current_provided).rjust(5))
+                qCurrentItem.setText(str(current_need).rjust(5))
                 qTripItem.setText(str(trips_remaining).rjust(5))
 
                 qTypeItem.setFlags(Qt.ItemFlag.ItemIsSelectable | Qt.ItemFlag.ItemIsEnabled)
@@ -469,7 +525,6 @@ class UI(QMainWindow):
         # self.resourceTableList.horizontalHeader().setSectionResizeMode(QHeaderView.ResizeMode.Stretch)
         # self.resourceTableList.verticalHeader().setSectionResizeMode(QHeaderView.ResizeMode.Stretch)
         # self.resourceTableList.setSizeAdjustPolicy(QAbstractScrollArea.SizeAdjustPolicy.AdjustToContents)
-        self.formatResourceTable()
 
     def formatResourceTable(self):
         for i in range(self.resourceTableList.rowCount()):
@@ -485,14 +540,6 @@ class UI(QMainWindow):
         self.resourceTableList.setSortingEnabled(True)
 
         self.resourceTableList.horizontalHeader().setStyleSheet(f"font-size: {self.allTextSize}px; font-weight: bold;background-color: rgb(20, 28, 160);")
-
-        # print(f"{self.resourceTableList.columnViewportPosition(0)}, {self.resourceTableList.columnViewportPosition(1)}, {self.resourceTableList.columnViewportPosition(2)}, {self.resourceTableList.columnViewportPosition(3)}")
-        # self.category.setGeometry(1, 32, 100, 25)
-        # self.resource.setGeometry(self.resourceTableList.columnViewportPosition(1), 32, 100, 25)
-        # self.total_need.setGeometry(self.resourceTableList.columnViewportPosition(2), 32, 100, 25)
-        # self.current_need.setGeometry(self.resourceTableList.columnViewportPosition(3), 32, 100, 25)
-        # self.notes.setGeometry(self.resourceTableList.columnViewportPosition(4), 32, 100, 25)
-        # self.remaining_column_label.setGeometry(self.resourceTableList.columnViewportPosition(5), 32, 1500, 25)
 
         self.scrollArea.setWidget(self.resourceTableList)
 
