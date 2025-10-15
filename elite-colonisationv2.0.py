@@ -1,6 +1,6 @@
 from PyQt6.QtCore import Qt
 from PyQt6.QtWidgets import *
-from PyQt6 import uic, QtGui
+from PyQt6 import uic, QtGui, QtCore
 from PyQt6.QtGui import QFont
 import sys
 import os
@@ -124,8 +124,9 @@ class UI(QMainWindow):
         self.eliteFileTime = 0
         self.lastFileName = ''
         self.resourceTypeDict = {}
-        self.resourceTableView = QTableView()
         self.resourceTableList = QTableWidget()
+        self.lastSortcolumn = 0
+        self.ships = []
 
         #initialize windows
         uic.loadUi('elite-colonisationv2.0.ui', self)
@@ -139,7 +140,8 @@ class UI(QMainWindow):
         self.getLogFileData()
         self.setGoodsList()
         self.getScsStats()
-        self.displayColony(self.stationList.currentText())
+        self.displayColony()
+        self.populateShipList()
 
         # rt = RepeatedTimer(60, self.monitor_directory) # it auto-starts, no need of rt.start()
         # try:
@@ -163,8 +165,10 @@ class UI(QMainWindow):
         self.action16pt_2.triggered.connect(lambda:self.setTextSize(100))
         self.action20pt_2.triggered.connect(lambda:self.setTextSize(10))
         self.action32pt_2.triggered.connect(lambda:self.setTextSize(1))
-        self.actionHide_Finished_Resources.triggered.connect(lambda:self.displayColony(self.stationList.currentText()))
-        self.stationList.currentIndexChanged.connect(lambda:self.displayColony(self.stationList.currentText()))
+        self.actionHide_Finished_Resources.triggered.connect(lambda:self.displayColony())
+        self.stationList.currentIndexChanged.connect(lambda:self.displayColony())
+        self.shipList.currentIndexChanged.connect(lambda:self.updateCargoSpace())
+
 
         self.actionQuit.triggered.connect(lambda:self.saveAndQuit())
 
@@ -203,7 +207,7 @@ class UI(QMainWindow):
 
         self.getEliteTime(loadTimeSelect)
         self.populateStationList()
-        self.displayColony(self.stationList.currentText())
+        self.displayColony()
 
     def setTextSize(self,textsize):
 
@@ -309,16 +313,16 @@ class UI(QMainWindow):
         stationType = "other"
 
         print("Reading logfile: ", logfile.split("Journal.",1)[1])
-        with open(logfile, "r", encoding='iso-8859-1') as f1, open("importantLogs.txt","a", encoding='iso-8859-1') as f2:
+        with open(logfile, "r", encoding='iso-8859-1') as f1, open("importantLogs.txt","a", encoding='iso-8859-1') as f2, open("ships.txt","a", encoding='iso-8859-1') as f3:
             for line in f1:
                 rawLine = json.loads(line)
                 # print("LogFile: ",logfile)
                 if "ConstructionProgress" in rawLine:
                     # print("Found a construction landing")
                     f2.write(str(rawLine)+'\n')
-                if "Loadout" in rawLine.values():
+                if "Loadout" in rawLine.values() and int(rawLine["CargoCapacity"]) > 0:
                     # print("Found a ship")
-                    f2.write(str(rawLine)+'\n')
+                    f3.write(str(rawLine)+'\n')
                 if "Docked" in rawLine.values():
                     isUnique = True
                     for stationIndex, station in enumerate(self.uniqueStations):
@@ -354,13 +358,42 @@ class UI(QMainWindow):
                     if station[3] == "colony":
                         self.stationList.addItem(str(station[1]))
 
-    def displayColony(self, selectedColony):
+
+    def populateShipList(self):
+        if os.path.exists("ships.txt"):
+            with open("ships.txt","r", encoding='iso-8859-1') as f:
+                for line in f:
+                    rawLine = ast.literal_eval(line)
+                    if "CargoCapacity" in rawLine:
+                        if rawLine["CargoCapacity"] not in self.ships:
+                            self.ships.append([rawLine["ShipIdent"],rawLine["CargoCapacity"],rawLine["timestamp"]])
+        self.ships = sorted(self.ships, key=lambda ship:self.ships[2])
+
+        for ship in self.ships:
+            items = [self.shipList.itemText(i) for i in range(self.shipList.count())]
+            print(f"{items}, {str(ship[1])}")
+            if str(ship[1]) not in str(items):
+                self.shipList.addItem(str(f"{ship[0]} ({ship[1]})"))
+        self.updateCargoSpace()
+
+    def updateCargoSpace(self):
+        current_ship = self.shipList.currentText()
+        print("The selected Ship type:", type(current_ship))
+        self.cargoSpace.setText(current_ship.split("(",1)[1].split(")",1)[0])
+        self.displayColony()
+
+    def displayColony(self):
         selectedMarketID = ""
         lastMarketEntry = {}
         qTypeItems = []
         qResourceItems = []
         qAmountItems = []
         qCurrentItems = []
+        qTripItems = []
+        cargo = 0
+        if len(self.shipList) > 0:
+            cargo = int(self.cargoSpace.text())
+        selectedColony = self.stationList.currentText()
 
         print("Filling out ", selectedColony)
         # self.clear_layout(self.resourcesLayout)
@@ -384,13 +417,17 @@ class UI(QMainWindow):
         print("Latest Entry:", lastMarketEntry)
         if "ResourcesRequired" in lastMarketEntry:
             self.resourceTableList.setRowCount(len(lastMarketEntry["ResourcesRequired"]))
-            self.resourceTableList.setColumnCount(5)
+            self.resourceTableList.setColumnCount(6)
             print(f'The last one: {len(lastMarketEntry["ResourcesRequired"])}')
             for i in range(len(lastMarketEntry["ResourcesRequired"])):
                 
                 total_need = lastMarketEntry["ResourcesRequired"][i]["RequiredAmount"]
                 current_provided = lastMarketEntry["ResourcesRequired"][i]["ProvidedAmount"]
                 current_need = int(total_need) - int(current_provided)
+                if cargo == 0:
+                    trips_remaining = 0
+                else:
+                    trips_remaining = round(current_need/cargo, 2)
                 print(f"Provided {current_provided}, Needed {current_need}")
                 if current_need == 0 and self.actionHide_Finished_Resources.isChecked():
                     continue
@@ -399,22 +436,26 @@ class UI(QMainWindow):
                 qResourceItem = QTableWidgetItem()
                 qAmountItem = QTableWidgetItem()
                 qCurrentItem = QTableWidgetItem()
+                qTripItem = QTableWidgetItem()
                 
 
-                qTypeItem.setText(str(self.resourceTypeDict[lastMarketEntry["ResourcesRequired"][i]["Name_Localised"]]) + " " * 5)
-                qResourceItem.setText(str(lastMarketEntry["ResourcesRequired"][i]["Name_Localised"]) + " " * 5)
-                qAmountItem.setText(str(total_need) + " " * 5)
-                qCurrentItem.setText(str(current_need) + " " * 5)
+                qTypeItem.setText(str(self.resourceTypeDict[lastMarketEntry["ResourcesRequired"][i]["Name_Localised"]]))
+                qResourceItem.setText(str(lastMarketEntry["ResourcesRequired"][i]["Name_Localised"]))
+                qAmountItem.setText(str(total_need).rjust(5))
+                qCurrentItem.setText(str(current_provided).rjust(5))
+                qTripItem.setText(str(trips_remaining).rjust(5))
 
                 qTypeItem.setFlags(Qt.ItemFlag.ItemIsSelectable | Qt.ItemFlag.ItemIsEnabled)
                 qResourceItem.setFlags(Qt.ItemFlag.ItemIsSelectable | Qt.ItemFlag.ItemIsEnabled)
                 qAmountItem.setFlags(Qt.ItemFlag.ItemIsSelectable | Qt.ItemFlag.ItemIsEnabled)
                 qCurrentItem.setFlags(Qt.ItemFlag.ItemIsSelectable | Qt.ItemFlag.ItemIsEnabled)
+                qTripItem.setFlags(Qt.ItemFlag.ItemIsSelectable | Qt.ItemFlag.ItemIsEnabled)
 
                 qTypeItems.append(qTypeItem)
                 qResourceItems.append(qResourceItem)
                 qAmountItems.append(qAmountItem)
                 qCurrentItems.append(qCurrentItem)
+                qTripItems.append(qTripItem)
 
 
         for i, qResource in enumerate(qResourceItems):
@@ -422,6 +463,9 @@ class UI(QMainWindow):
             self.resourceTableList.setItem(i, 1, qResource)
             self.resourceTableList.setItem(i, 2, qAmountItems[i])
             self.resourceTableList.setItem(i, 3, qCurrentItems[i])
+            self.resourceTableList.setItem(i, 4, qTripItems[i])
+        self.resourceTableList.setHorizontalHeaderLabels(["Category", "Resource", "Total Need", "Current Need", "Trips Remaining", "Notes"])
+
         # self.resourceTableList.horizontalHeader().setSectionResizeMode(QHeaderView.ResizeMode.Stretch)
         # self.resourceTableList.verticalHeader().setSectionResizeMode(QHeaderView.ResizeMode.Stretch)
         # self.resourceTableList.setSizeAdjustPolicy(QAbstractScrollArea.SizeAdjustPolicy.AdjustToContents)
@@ -431,14 +475,27 @@ class UI(QMainWindow):
         for i in range(self.resourceTableList.rowCount()):
             self.resourceTableList.setRowHeight(i, self.allTextSize+15)
         self.resourceTableList.setFont(QFont('Calibri',self.allTextSize))
-        self.resourceTableList.setColumnWidth(0, 175)
-        self.resourceTableList.setColumnWidth(1, 230)
-        self.resourceTableList.setColumnWidth(2, 120)
-        self.resourceTableList.horizontalHeader().setVisible(False)
+        self.resourceTableList.setColumnWidth(0, int(14.6 * self.allTextSize))
+        self.resourceTableList.setColumnWidth(1, int(19 * self.allTextSize))
+        self.resourceTableList.setColumnWidth(2, int(11 * self.allTextSize))
+        self.resourceTableList.setColumnWidth(3, int(9 * self.allTextSize))
+        self.resourceTableList.setColumnWidth(4, int(9 * self.allTextSize))
+        self.resourceTableList.setColumnWidth(5, int(15 * self.allTextSize))
         self.resourceTableList.verticalHeader().setVisible(False)
-        self.resourcesLayout.setRowStretch(0, 1)
-        self.resourcesLayout.setColumnStretch(0, 1)
-        self.resourcesLayout.addWidget(self.resourceTableList,0,0)
+        self.resourceTableList.setSortingEnabled(True)
+
+        self.resourceTableList.horizontalHeader().setStyleSheet(f"font-size: {self.allTextSize}px; font-weight: bold;background-color: rgb(20, 28, 160);")
+
+        # print(f"{self.resourceTableList.columnViewportPosition(0)}, {self.resourceTableList.columnViewportPosition(1)}, {self.resourceTableList.columnViewportPosition(2)}, {self.resourceTableList.columnViewportPosition(3)}")
+        # self.category.setGeometry(1, 32, 100, 25)
+        # self.resource.setGeometry(self.resourceTableList.columnViewportPosition(1), 32, 100, 25)
+        # self.total_need.setGeometry(self.resourceTableList.columnViewportPosition(2), 32, 100, 25)
+        # self.current_need.setGeometry(self.resourceTableList.columnViewportPosition(3), 32, 100, 25)
+        # self.notes.setGeometry(self.resourceTableList.columnViewportPosition(4), 32, 100, 25)
+        # self.remaining_column_label.setGeometry(self.resourceTableList.columnViewportPosition(5), 32, 1500, 25)
+
+        self.scrollArea.setWidget(self.resourceTableList)
+
 
     def clear_layout(self, layout):
         for i in reversed(range(layout.count())):

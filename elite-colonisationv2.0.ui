@@ -6,7 +6,7 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>1001</width>
+    <width>1144</width>
     <height>905</height>
    </rect>
   </property>
@@ -32,78 +32,14 @@
       <x>0</x>
       <y>70</y>
       <width>1000</width>
-      <height>54</height>
+      <height>58</height>
      </rect>
     </property>
     <layout class="QGridLayout" name="selectAndButtons">
-     <item row="1" column="4">
-      <widget class="QLabel" name="remaining_column_label">
-       <property name="styleSheet">
-        <string notr="true"/>
-       </property>
-       <property name="text">
-        <string>Trips Remaining</string>
-       </property>
-       <property name="alignment">
-        <set>AlignCenter</set>
-       </property>
-      </widget>
-     </item>
-     <item row="0" column="0" colspan="4">
+     <item row="0" column="0" colspan="2">
       <widget class="QComboBox" name="stationList"/>
      </item>
-     <item row="1" column="1">
-      <widget class="QPushButton" name="resource">
-       <property name="minimumSize">
-        <size>
-         <width>230</width>
-         <height>0</height>
-        </size>
-       </property>
-       <property name="styleSheet">
-        <string notr="true">QPushButton {background-color: rgb(20, 28, 160);}
-QPushButton:hover {background-color: rgb(24, 90, 0);}</string>
-       </property>
-       <property name="text">
-        <string>Resource</string>
-       </property>
-      </widget>
-     </item>
-     <item row="1" column="2">
-      <widget class="QPushButton" name="total_need">
-       <property name="styleSheet">
-        <string notr="true">QPushButton {background-color: rgb(20, 28, 160);}
-QPushButton:hover {background-color: rgb(24, 90, 0);}</string>
-       </property>
-       <property name="text">
-        <string>Total Need</string>
-       </property>
-      </widget>
-     </item>
-     <item row="1" column="0">
-      <widget class="QPushButton" name="category">
-       <property name="sizePolicy">
-        <sizepolicy hsizetype="Minimum" vsizetype="Expanding">
-         <horstretch>0</horstretch>
-         <verstretch>0</verstretch>
-        </sizepolicy>
-       </property>
-       <property name="minimumSize">
-        <size>
-         <width>170</width>
-         <height>0</height>
-        </size>
-       </property>
-       <property name="styleSheet">
-        <string notr="true">QPushButton {background-color: rgb(20, 28, 160);}
-QPushButton:hover {background-color: rgb(24, 90, 0);}</string>
-       </property>
-       <property name="text">
-        <string>Category</string>
-       </property>
-      </widget>
-     </item>
-     <item row="0" column="4">
+     <item row="0" column="2">
       <widget class="QPushButton" name="update">
        <property name="styleSheet">
         <string notr="true">QPushButton {background-color: #7c0a02;}
@@ -111,30 +47,6 @@ QPushButton:hover {background-color: rgb(24, 90, 0);}</string>
        </property>
        <property name="text">
         <string>Update</string>
-       </property>
-      </widget>
-     </item>
-     <item row="1" column="3">
-      <widget class="QPushButton" name="current_need">
-       <property name="styleSheet">
-        <string notr="true">QPushButton {background-color: rgb(20, 28, 160);}
-QPushButton:hover {background-color: rgb(24, 90, 0);}</string>
-       </property>
-       <property name="text">
-        <string>Current Need</string>
-       </property>
-      </widget>
-     </item>
-     <item row="1" column="5">
-      <widget class="QLabel" name="end_space">
-       <property name="minimumSize">
-        <size>
-         <width>220</width>
-         <height>0</height>
-        </size>
-       </property>
-       <property name="text">
-        <string/>
        </property>
       </widget>
      </item>
@@ -165,7 +77,7 @@ QPushButton:hover {background-color: rgb(24, 90, 0);}</string>
       <x>10</x>
       <y>130</y>
       <width>2000</width>
-      <height>2000</height>
+      <height>700</height>
      </rect>
     </property>
     <property name="sizePolicy">
@@ -180,7 +92,61 @@ QPushButton:hover {background-color: rgb(24, 90, 0);}</string>
       <height>20</height>
      </size>
     </property>
-    <layout class="QGridLayout" name="resourcesLayout"/>
+    <layout class="QGridLayout" name="resourcesLayout">
+     <item row="0" column="0">
+      <widget class="QScrollArea" name="scrollArea">
+       <property name="sizeAdjustPolicy">
+        <enum>QAbstractScrollArea::AdjustToContents</enum>
+       </property>
+       <property name="widgetResizable">
+        <bool>true</bool>
+       </property>
+       <widget class="QWidget" name="scrollAreaWidgetContents">
+        <property name="geometry">
+         <rect>
+          <x>0</x>
+          <y>0</y>
+          <width>1980</width>
+          <height>680</height>
+         </rect>
+        </property>
+       </widget>
+      </widget>
+     </item>
+    </layout>
+   </widget>
+   <widget class="QLineEdit" name="cargoSpace">
+    <property name="geometry">
+     <rect>
+      <x>500</x>
+      <y>40</y>
+      <width>171</width>
+      <height>21</height>
+     </rect>
+    </property>
+   </widget>
+   <widget class="QComboBox" name="shipList">
+    <property name="geometry">
+     <rect>
+      <x>550</x>
+      <y>10</y>
+      <width>131</width>
+      <height>25</height>
+     </rect>
+    </property>
+   </widget>
+   <widget class="QLabel" name="label">
+    <property name="geometry">
+     <rect>
+      <x>500</x>
+      <y>10</y>
+      <width>41</width>
+      <height>21</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>Ship:</string>
+    </property>
    </widget>
   </widget>
   <widget class="QMenuBar" name="menubar">
@@ -188,8 +154,8 @@ QPushButton:hover {background-color: rgb(24, 90, 0);}</string>
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>1001</width>
-     <height>20</height>
+     <width>1144</width>
+     <height>22</height>
     </rect>
    </property>
    <widget class="QMenu" name="menuFile">
@@ -234,15 +200,9 @@ QPushButton:hover {background-color: rgb(24, 90, 0);}</string>
     <addaction name="actionHide_Notes"/>
     <addaction name="menuTable_Font_Size"/>
    </widget>
-   <widget class="QMenu" name="menuUse_Ship">
-    <property name="title">
-     <string>Use Ship</string>
-    </property>
-   </widget>
    <addaction name="menuFile"/>
    <addaction name="menuOptions"/>
    <addaction name="menuFormat"/>
-   <addaction name="menuUse_Ship"/>
   </widget>
   <widget class="QStatusBar" name="statusbar"/>
   <action name="actionSet_logfile_location">
