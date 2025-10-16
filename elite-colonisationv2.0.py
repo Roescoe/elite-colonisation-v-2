@@ -1,7 +1,8 @@
 from PyQt6.QtCore import Qt
 from PyQt6.QtWidgets import *
 from PyQt6 import uic, QtGui, QtCore
-from PyQt6.QtGui import QFont
+from PyQt6.QtGui import QFont, QColor
+import asyncio
 import sys
 import os
 import platform
@@ -9,14 +10,11 @@ import ctypes
 import json
 import ast
 import time
-from operator import itemgetter
 import pickle
 from datetime import datetime, timezone, timedelta
-from threading import Timer
 import glob
-# import copy
 
-# This is a tool to print out Elite Dangerous colonization data pulled from the user's logfiles
+# This is a tool to print out Elite Dangerous colonisation data pulled from the user's logfiles
 # Copyright (C) 2025 Roescoe
 
 # This program is free software: you can redistribute it and/or modify
@@ -32,46 +30,9 @@ import glob
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-def watch_file(filename, time_limit=3600, check_interval=60):
-    """Return true if filename exists, if not keep checking once every check_interval seconds for time_limit seconds.
-    time_limit defaults to 1 hour
-    check_interval defaults to 1 minute
-    """
-    now = time.time()
-    last_time = now + time_limit
-    
-    while time.time() <= last_time:
-        if os.path.exists(filename):
-            return True
-        else:
-            # Wait for check interval seconds, then check again.
-            time.sleep(check_interval)
-    return False
 
-class RepeatedTimer(object):
-    def __init__(self, interval, function, *args, **kwargs):
-        self._timer     = None
-        self.interval   = interval
-        self.function   = function
-        self.args       = args
-        self.kwargs     = kwargs
-        self.is_running = False
-        self.start()
 
-    def _run(self):
-        self.is_running = False
-        self.start()
-        self.function(*self.args, **self.kwargs)
 
-    def start(self):
-        if not self.is_running:
-            self._timer = Timer(self.interval, self._run)
-            self._timer.start()
-            self.is_running = True
-
-    def stop(self):
-        self._timer.cancel()
-        self.is_running = False
 
 class LogFileDialogClass(QDialog):
     def __init__(self, *args, **kwargs):
@@ -136,13 +97,12 @@ class UI(QMainWindow):
         app.setWindowIcon(QtGui.QIcon('ColoniseLogo.png'))
         self.show()
         self.LogFileDialog = LogFileDialogClass()
-        self.getFileSettings()
 
         #set up stuff
+        self.getFileSettings()
         self.getLogFileData()
         self.setGoodsList()
         self.populateShipList()
-        self.updateCargoSpace()
         self.displayColony()
         self.getScsStats()
         # rt = RepeatedTimer(60, self.monitor_directory) # it auto-starts, no need of rt.start()
@@ -277,7 +237,6 @@ class UI(QMainWindow):
         if os.path.exists("stationList.pickle"):
             with open("stationList.pickle", 'rb') as st:
                 self.uniqueStations = pickle.load(st)
-            self.populateStationList()
 
 
     def getLogFileData(self):
@@ -314,7 +273,6 @@ class UI(QMainWindow):
         stationType = "other"
 
         print("Reading logfile: ", logfile.split("Journal.",1)[1])
-        print("logfile time: ", self.mostRecentReadTime)
         with open(logfile, "r", encoding='iso-8859-1') as f1, open("ships.txt","a", encoding='iso-8859-1') as f3:
             for line in f1:
                 rawLine = json.loads(line)
@@ -327,8 +285,6 @@ class UI(QMainWindow):
                 if "ConstructionProgress" in rawLine:
                     # print("Found a construction landing")
                     for index,colony in enumerate(self.colonies):
-
-                        # print(f'Reading: {rawLine["timestamp"]} Pre-existing: {colony["timestamp"]}')
                         if str(rawLine["MarketID"]) == str(colony["MarketID"]):
                             foundExistingColony = True
                             if str(rawLine["timestamp"]) > str(colony["timestamp"]):
@@ -405,6 +361,9 @@ class UI(QMainWindow):
             if str(ship[1]) not in str(items):
                 self.shipList.addItem(str(f"{ship[0]} ({ship[1]})"))
 
+        current_ship = self.shipList.currentText()
+        self.cargoSpace.setText(current_ship.split("(",1)[1].split(")",1)[0])
+
     def updateCargoSpace(self):
         current_ship = self.shipList.currentText()
         self.cargoSpace.setText(current_ship.split("(",1)[1].split(")",1)[0])
@@ -468,6 +427,7 @@ class UI(QMainWindow):
         qCurrentItems = []
         qTripItems = []
         cargo = 0
+        doneState = -1
 
         if len(self.shipList) > 0:
             cargo = int(self.cargoSpace.text())
@@ -487,6 +447,7 @@ class UI(QMainWindow):
                     trips_remaining = 0
                 else:
                     trips_remaining = round(current_need/cargo, 1)
+
                 if current_need == 0 and self.actionHide_Finished_Resources.isChecked():
                     continue
 
@@ -499,9 +460,19 @@ class UI(QMainWindow):
 
                 qTypeItem.setText(str(self.resourceTypeDict[self.lastMarketEntry["ResourcesRequired"][i]["Name_Localised"]]))
                 qResourceItem.setText(str(self.lastMarketEntry["ResourcesRequired"][i]["Name_Localised"]))
-                qAmountItem.setText(str(total_need).rjust(5))
-                qCurrentItem.setText(str(current_need).rjust(5))
+                qAmountItem.setText(f"{total_need:,}".rjust(5))
+                qCurrentItem.setText(f"{current_need:,}".rjust(5))
                 qTripItem.setText(str(trips_remaining).rjust(5))
+
+                if current_need == "0":
+                    doneState = 1
+                    # qCurrentItem.setStyleSheet("color: snow; background-color: green; font-size: "+ str(self.allTextSize) +"px;")
+                elif(int(current_need) == int(total_need)):
+                    doneState = -1
+                    # qCurrentItem.setStyleSheet("color: snow; background-color: #c32148; font-size: "+ str(self.allTextSize) +"px;")
+                else:
+                    doneState = 0
+                    # qCurrentItem.setStyleSheet("color: snow; background-color: #281E5D; font-size: "+ str(self.allTextSize) +"px;")
 
                 qTypeItem.setFlags(Qt.ItemFlag.ItemIsSelectable | Qt.ItemFlag.ItemIsEnabled)
                 qResourceItem.setFlags(Qt.ItemFlag.ItemIsSelectable | Qt.ItemFlag.ItemIsEnabled)
@@ -509,10 +480,14 @@ class UI(QMainWindow):
                 qCurrentItem.setFlags(Qt.ItemFlag.ItemIsSelectable | Qt.ItemFlag.ItemIsEnabled)
                 qTripItem.setFlags(Qt.ItemFlag.ItemIsSelectable | Qt.ItemFlag.ItemIsEnabled)
 
+                qAmountItem.setTextAlignment(Qt.AlignmentFlag.AlignRight)
+                qCurrentItem.setTextAlignment(Qt.AlignmentFlag.AlignRight)
+                qTripItem.setTextAlignment(Qt.AlignmentFlag.AlignRight)
+
                 qTypeItems.append(qTypeItem)
                 qResourceItems.append(qResourceItem)
                 qAmountItems.append(qAmountItem)
-                qCurrentItems.append(qCurrentItem)
+                qCurrentItems.append([qCurrentItem, doneState])
                 qTripItems.append(qTripItem)
 
 
@@ -520,7 +495,13 @@ class UI(QMainWindow):
             self.resourceTableList.setItem(i, 0, qTypeItems[i])
             self.resourceTableList.setItem(i, 1, qResource)
             self.resourceTableList.setItem(i, 2, qAmountItems[i])
-            self.resourceTableList.setItem(i, 3, qCurrentItems[i])
+            self.resourceTableList.setItem(i, 3, qCurrentItems[i][0])
+            if qCurrentItems[i][1] == 1:
+                self.resourceTableList.item(i, 2).setBackground(QColor("green"))
+            elif qCurrentItems[i][1] == -1:
+                self.resourceTableList.item(i, 2).setBackground(QColor("#c32148"))
+            elif qCurrentItems[i][1] == 0:
+                self.resourceTableList.item(i, 2).setBackground(QColor("#281E5D"))
             self.resourceTableList.setItem(i, 4, qTripItems[i])
         self.resourceTableList.setHorizontalHeaderLabels(["Category", "Resource", "Total Need", "Current Need", "Trips Remaining", "Notes"])
 
@@ -529,6 +510,7 @@ class UI(QMainWindow):
         # self.resourceTableList.setSizeAdjustPolicy(QAbstractScrollArea.SizeAdjustPolicy.AdjustToContents)
 
     def formatResourceTable(self):
+        print("Formatting table...")
         for i in range(self.resourceTableList.rowCount()):
             self.resourceTableList.setRowHeight(i, self.allTextSize+15)
         self.resourceTableList.setFont(QFont('Calibri',self.allTextSize))
@@ -552,15 +534,16 @@ class UI(QMainWindow):
         stillNeeded = 0
         percentComplete = 0
 
+        print("Calculating various stats...")
+
         if self.resourceTableList:
-            print(f"col: {self.resourceTableList.columnCount()} and row: {self.resourceTableList.rowCount()} ")
             for trip in range(self.resourceTableList.rowCount()):
                 if self.resourceTableList.item(trip, 4):
                     tripsCalc += float(self.resourceTableList.item(trip, 4).text())
                 if self.resourceTableList.item(trip, 2):
-                    totalMaterials += float(self.resourceTableList.item(trip, 2).text())
+                    totalMaterials += int(self.resourceTableList.item(trip, 2).text().replace(',', ''))
                 if self.resourceTableList.item(trip, 3):
-                    stillNeeded += float(self.resourceTableList.item(trip, 3).text())
+                    stillNeeded += int(self.resourceTableList.item(trip, 3).text().replace(',', ''))
 
         if totalMaterials > 0:
             percentPerTrip = round(100 * int(self.cargoSpace.text()) / totalMaterials, 2)
@@ -697,6 +680,22 @@ class UI(QMainWindow):
         except OSError:
             pass
 
+    async def check_for_new_files(self):
+        defaultFileDir = ''
+        if(platform.system() == 'Windows'):
+            defaultFileDir = os.path.expandvars(r"C:\Users\$USERNAME") + r'\Saved Games\Frontier Developments\Elite Dangerous'
+        elif(platform.system() == 'Linux'):
+            defaultFileDir = os.path.expanduser("~") + '/.local/share/Steam/steamapps/compatdata/359320/pfx/drive_c/users/steamuser/Saved Games/Frontier Developments/Elite Dangerous'
+
+        while True:
+            await asyncio.sleep(300)  # Wait for 5 minutes
+            print("Check/update files now")
+            # current_files = set(os.listdir(directory_to_watch))
+
+            # new_files = current_files - seen_files
+            # if new_files:
+            #     print(f"New files detected: {new_files}")
+            #     seen_files = current_files  # Update the seen files
 
 
     def saveAndQuit(self):
@@ -729,4 +728,5 @@ class UI(QMainWindow):
 if __name__ == '__main__':
     app = QApplication(sys.argv)
     uIWindow = UI()
+    # asyncio.run(uIWindow.check_for_new_files())
     app.exec()

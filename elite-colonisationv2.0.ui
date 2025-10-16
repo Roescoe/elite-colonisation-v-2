@@ -124,18 +124,18 @@ QPushButton:hover {background-color: rgb(24, 90, 0);}</string>
    <widget class="QLineEdit" name="cargoSpace">
     <property name="geometry">
      <rect>
-      <x>670</x>
-      <y>40</y>
+      <x>870</x>
+      <y>30</y>
       <width>131</width>
-      <height>21</height>
+      <height>25</height>
      </rect>
     </property>
    </widget>
    <widget class="QComboBox" name="shipList">
     <property name="geometry">
      <rect>
-      <x>670</x>
-      <y>10</y>
+      <x>870</x>
+      <y>0</y>
       <width>131</width>
       <height>25</height>
      </rect>
@@ -144,27 +144,33 @@ QPushButton:hover {background-color: rgb(24, 90, 0);}</string>
    <widget class="QLabel" name="ship_label">
     <property name="geometry">
      <rect>
-      <x>630</x>
-      <y>10</y>
-      <width>41</width>
-      <height>21</height>
+      <x>825</x>
+      <y>0</y>
+      <width>45</width>
+      <height>25</height>
      </rect>
     </property>
     <property name="text">
      <string>Ship:</string>
     </property>
+    <property name="alignment">
+     <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+    </property>
    </widget>
    <widget class="QLabel" name="cargo_label">
     <property name="geometry">
      <rect>
-      <x>630</x>
-      <y>40</y>
-      <width>41</width>
-      <height>17</height>
+      <x>825</x>
+      <y>30</y>
+      <width>45</width>
+      <height>25</height>
      </rect>
     </property>
     <property name="text">
-     <string>Cargo</string>
+     <string>Cargo:</string>
+    </property>
+    <property name="alignment">
+     <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
     </property>
    </widget>
    <widget class="QLabel" name="trips_left">
@@ -196,7 +202,7 @@ QPushButton:hover {background-color: rgb(24, 90, 0);}</string>
    <widget class="QLabel" name="percent_complete">
     <property name="geometry">
      <rect>
-      <x>310</x>
+      <x>370</x>
       <y>0</y>
       <width>291</width>
       <height>21</height>
@@ -215,7 +221,7 @@ QPushButton:hover {background-color: rgb(24, 90, 0);}</string>
    <widget class="QLabel" name="total_materials">
     <property name="geometry">
      <rect>
-      <x>310</x>
+      <x>370</x>
       <y>30</y>
       <width>291</width>
       <height>21</height>
@@ -231,7 +237,7 @@ QPushButton:hover {background-color: rgb(24, 90, 0);}</string>
    <widget class="QLabel" name="materials_still_needed">
     <property name="geometry">
      <rect>
-      <x>310</x>
+      <x>370</x>
       <y>60</y>
       <width>291</width>
       <height>21</height>
