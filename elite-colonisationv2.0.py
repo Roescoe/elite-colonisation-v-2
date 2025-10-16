@@ -138,6 +138,10 @@ class UI(QMainWindow):
     def showLogfileDialog(self):
         print("showing log file now... ")
         self.LogFileDialog.exec()
+        if not os.path.isdir(self.LogFileDialog.FileNamelineEdit.text()):
+            print("Invalid file path")
+            self.LogFileDialog.FileNamelineEdit.setText("")
+
 
     def setLogfileLoadRange(self, loadTimeSelect):
         
@@ -354,15 +358,16 @@ class UI(QMainWindow):
                     if "CargoCapacity" in rawLine:
                         if rawLine["CargoCapacity"] not in self.ships:
                             self.ships.append([rawLine["ShipIdent"],rawLine["CargoCapacity"],rawLine["timestamp"]])
-        self.ships = sorted(self.ships, key=lambda ship:self.ships[2])
+        if self.ships:
+            self.ships = sorted(self.ships, key=lambda ship:self.ships[2])
 
-        for ship in self.ships:
-            items = [self.shipList.itemText(i) for i in range(self.shipList.count())]
-            if str(ship[1]) not in str(items):
-                self.shipList.addItem(str(f"{ship[0]} ({ship[1]})"))
-
-        current_ship = self.shipList.currentText()
-        self.cargoSpace.setText(current_ship.split("(",1)[1].split(")",1)[0])
+            for ship in self.ships:
+                items = [self.shipList.itemText(i) for i in range(self.shipList.count())]
+                if str(ship[1]) not in str(items):
+                    self.shipList.addItem(str(f"{ship[0]} ({ship[1]})"))
+        if self.shipList:
+            current_ship = self.shipList.currentText()
+            self.cargoSpace.setText(current_ship.split("(",1)[1].split(")",1)[0])
 
     def updateCargoSpace(self):
         current_ship = self.shipList.currentText()
@@ -497,11 +502,11 @@ class UI(QMainWindow):
             self.resourceTableList.setItem(i, 2, qAmountItems[i])
             self.resourceTableList.setItem(i, 3, qCurrentItems[i][0])
             if qCurrentItems[i][1] == 1:
-                self.resourceTableList.item(i, 2).setBackground(QColor("green"))
+                self.resourceTableList.item(i, 3).setBackground(QColor("green"))
             elif qCurrentItems[i][1] == -1:
-                self.resourceTableList.item(i, 2).setBackground(QColor("#c32148"))
+                self.resourceTableList.item(i, 3).setBackground(QColor("#c32148"))
             elif qCurrentItems[i][1] == 0:
-                self.resourceTableList.item(i, 2).setBackground(QColor("#281E5D"))
+                self.resourceTableList.item(i, 3).setBackground(QColor("#281E5D"))
             self.resourceTableList.setItem(i, 4, qTripItems[i])
         self.resourceTableList.setHorizontalHeaderLabels(["Category", "Resource", "Total Need", "Current Need", "Trips Remaining", "Notes"])
 
