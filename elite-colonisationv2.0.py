@@ -277,7 +277,7 @@ class UI(QMainWindow):
         stationType = "other"
 
         print("Reading logfile: ", logfile.split("Journal.",1)[1])
-        with open(logfile, "r", encoding='iso-8859-1') as f1, open("ships.txt","a", encoding='iso-8859-1') as f3:
+        with open(logfile, "r", encoding='iso-8859-1') as f1, open("ships.txt","w", encoding='iso-8859-1') as f3:
             for line in f1:
                 rawLine = json.loads(line)
                 # print("LogFile: ",logfile)
@@ -351,6 +351,7 @@ class UI(QMainWindow):
 
 
     def populateShipList(self):
+        print("Getting Ships...")
         if os.path.exists("ships.txt"):
             with open("ships.txt","r", encoding='iso-8859-1') as f:
                 for line in f:
@@ -368,6 +369,7 @@ class UI(QMainWindow):
         if self.shipList:
             current_ship = self.shipList.currentText()
             self.cargoSpace.setText(current_ship.split("(",1)[1].split(")",1)[0])
+        print("Got Ships.")
 
     def updateCargoSpace(self):
         current_ship = self.shipList.currentText()
@@ -547,12 +549,13 @@ class UI(QMainWindow):
         if self.resourceTableList:
             for trip in range(self.resourceTableList.rowCount()):
                 print(f"Is this an int? {isinstance(stillNeeded,int)}")
-                if self.resourceTableList.item(trip, 4):
+                if self.resourceTableList.item(trip,     4):
                     tripsCalc += float(self.resourceTableList.item(trip, 4).text())
                 if self.resourceTableList.item(trip, 2):
                     totalMaterials += int(self.resourceTableList.item(trip, 2).text().replace(',', ''))
                 if self.resourceTableList.item(trip, 3) and self.resourceTableList.item(trip, 3).text() != "Done":
                     stillNeeded += int(self.resourceTableList.item(trip, 3).text().replace(',', ''))
+        tripsCalc = round(tripsCalc, 2)
 
         if totalMaterials > 0:
             percentPerTrip = round(100 * int(self.cargoSpace.text()) / totalMaterials, 2)
