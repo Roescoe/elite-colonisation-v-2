@@ -359,7 +359,7 @@ class UI(QMainWindow):
                         if rawLine["CargoCapacity"] not in self.ships:
                             self.ships.append([rawLine["ShipIdent"],rawLine["CargoCapacity"],rawLine["timestamp"]])
         if self.ships:
-            self.ships = sorted(self.ships, key=lambda ship:self.ships[2])
+            self.ships = sorted(self.ships, key=lambda ship:self.ships[2], reverse=True)
 
             for ship in self.ships:
                 items = [self.shipList.itemText(i) for i in range(self.shipList.count())]
@@ -465,19 +465,23 @@ class UI(QMainWindow):
 
                 qTypeItem.setText(str(self.resourceTypeDict[self.lastMarketEntry["ResourcesRequired"][i]["Name_Localised"]]))
                 qResourceItem.setText(str(self.lastMarketEntry["ResourcesRequired"][i]["Name_Localised"]))
-                qAmountItem.setText(f"{total_need:,}".rjust(5))
-                qCurrentItem.setText(f"{current_need:,}".rjust(5))
-                qTripItem.setText(str(trips_remaining).rjust(5))
+                qAmountItem.setText(f"{total_need:,}".rjust(7))
+                qTripItem.setText(str(trips_remaining).rjust(7))
 
-                if current_need == "0":
+                print("The need: ",type(current_need))
+                if int(current_need) == 0:
                     doneState = 1
-                    # qCurrentItem.setStyleSheet("color: snow; background-color: green; font-size: "+ str(self.allTextSize) +"px;")
                 elif(int(current_need) == int(total_need)):
                     doneState = -1
-                    # qCurrentItem.setStyleSheet("color: snow; background-color: #c32148; font-size: "+ str(self.allTextSize) +"px;")
                 else:
                     doneState = 0
-                    # qCurrentItem.setStyleSheet("color: snow; background-color: #281E5D; font-size: "+ str(self.allTextSize) +"px;")
+                if doneState == 1:
+                    qCurrentItem.setText("Done")
+                    qCurrentItem.setTextAlignment(Qt.AlignmentFlag.AlignCenter)
+                else:
+                    qCurrentItem.setText(f"{current_need:,}".rjust(7))
+                    qCurrentItem.setTextAlignment(Qt.AlignmentFlag.AlignRight)
+                print(f"done? {doneState}")
 
                 qTypeItem.setFlags(Qt.ItemFlag.ItemIsSelectable | Qt.ItemFlag.ItemIsEnabled)
                 qResourceItem.setFlags(Qt.ItemFlag.ItemIsSelectable | Qt.ItemFlag.ItemIsEnabled)
@@ -486,7 +490,6 @@ class UI(QMainWindow):
                 qTripItem.setFlags(Qt.ItemFlag.ItemIsSelectable | Qt.ItemFlag.ItemIsEnabled)
 
                 qAmountItem.setTextAlignment(Qt.AlignmentFlag.AlignRight)
-                qCurrentItem.setTextAlignment(Qt.AlignmentFlag.AlignRight)
                 qTripItem.setTextAlignment(Qt.AlignmentFlag.AlignRight)
 
                 qTypeItems.append(qTypeItem)
@@ -528,7 +531,7 @@ class UI(QMainWindow):
         self.resourceTableList.verticalHeader().setVisible(False)
         self.resourceTableList.setSortingEnabled(True)
 
-        self.resourceTableList.horizontalHeader().setStyleSheet(f"font-size: {self.allTextSize}px; font-weight: bold;background-color: rgb(20, 28, 160);")
+        self.resourceTableList.horizontalHeader().setStyleSheet(f"color: snow; font-size: {self.allTextSize}px; font-weight: bold; background-color: rgb(20, 28, 160);")
 
         self.scrollArea.setWidget(self.resourceTableList)
 
@@ -543,11 +546,12 @@ class UI(QMainWindow):
 
         if self.resourceTableList:
             for trip in range(self.resourceTableList.rowCount()):
+                print(f"Is this an int? {isinstance(stillNeeded,int)}")
                 if self.resourceTableList.item(trip, 4):
                     tripsCalc += float(self.resourceTableList.item(trip, 4).text())
                 if self.resourceTableList.item(trip, 2):
                     totalMaterials += int(self.resourceTableList.item(trip, 2).text().replace(',', ''))
-                if self.resourceTableList.item(trip, 3):
+                if self.resourceTableList.item(trip, 3) and self.resourceTableList.item(trip, 3).text() != "Done":
                     stillNeeded += int(self.resourceTableList.item(trip, 3).text().replace(',', ''))
 
         if totalMaterials > 0:
