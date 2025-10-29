@@ -282,7 +282,7 @@ QPushButton:hover {background-color: rgb(24, 90, 0);}</string>
      <addaction name="action100_Days"/>
     </widget>
     <addaction name="menuload_no_older_than"/>
-    <addaction name="actionload_stats_on_start"/>
+    <addaction name="actionload_stats"/>
    </widget>
    <widget class="QMenu" name="menuFormat">
     <property name="title">
@@ -292,11 +292,11 @@ QPushButton:hover {background-color: rgb(24, 90, 0);}</string>
      <property name="title">
       <string>Table Font Size</string>
      </property>
+     <addaction name="action9pt_2"/>
+     <addaction name="action10pt_2"/>
      <addaction name="action12pt_2"/>
-     <addaction name="action14pt_2"/>
      <addaction name="action16pt_2"/>
-     <addaction name="action20pt_2"/>
-     <addaction name="action32pt_2"/>
+     <addaction name="action24pt_2"/>
     </widget>
     <addaction name="actionHide_Finished_Resources"/>
     <addaction name="actionHide_Notes"/>
@@ -390,20 +390,28 @@ QPushButton:hover {background-color: rgb(24, 90, 0);}</string>
     <string>Hide Notes</string>
    </property>
   </action>
+  <action name="action9pt_2">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="text">
+    <string>9pt</string>
+   </property>
+  </action>
+  <action name="action10pt_2">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="text">
+    <string>10pt</string>
+   </property>
+  </action>
   <action name="action12pt_2">
    <property name="checkable">
     <bool>true</bool>
    </property>
    <property name="text">
     <string>12pt</string>
-   </property>
-  </action>
-  <action name="action14pt_2">
-   <property name="checkable">
-    <bool>true</bool>
-   </property>
-   <property name="text">
-    <string>14pt</string>
    </property>
   </action>
   <action name="action16pt_2">
@@ -414,20 +422,12 @@ QPushButton:hover {background-color: rgb(24, 90, 0);}</string>
     <string>16pt</string>
    </property>
   </action>
-  <action name="action20pt_2">
+  <action name="action24pt_2">
    <property name="checkable">
     <bool>true</bool>
    </property>
    <property name="text">
-    <string>20pt</string>
-   </property>
-  </action>
-  <action name="action32pt_2">
-   <property name="checkable">
-    <bool>true</bool>
-   </property>
-   <property name="text">
-    <string>32pt</string>
+    <string>24pt</string>
    </property>
   </action>
   <action name="action1_Day">
@@ -438,12 +438,12 @@ QPushButton:hover {background-color: rgb(24, 90, 0);}</string>
     <string>1 Day</string>
    </property>
   </action>
-  <action name="actionload_stats_on_start">
+  <action name="actionload_stats">
    <property name="checkable">
     <bool>true</bool>
    </property>
    <property name="text">
-    <string>load stats on start</string>
+    <string>load outpost SCS stats</string>
    </property>
   </action>
  </widget>

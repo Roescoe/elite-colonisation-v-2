@@ -31,9 +31,6 @@ import glob
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 
-
-
-
 class LogFileDialogClass(QDialog):
     def __init__(self, *args, **kwargs):
         super(LogFileDialogClass, self).__init__()
@@ -104,15 +101,12 @@ class UI(QMainWindow):
         self.setGoodsList()
         self.populateShipList()
         self.displayColony()
-        self.getScsStats()
-        # rt = RepeatedTimer(60, self.monitor_directory) # it auto-starts, no need of rt.start()
-        # try:
-        #     time.sleep(5) # your long-running job goes here...
-        # finally:
-        #     rt.stop() # better in a try/finally block to make sure the program ends!
-        # self.thread = Thread(target=self.monitor_directory)
-        # self.thread.start()
-        # self.populateStationList()
+
+        # loop = asyncio.new_event_loop()
+        # asyncio.set_event_loop(loop)
+        # loop.create_task(self.monitor_directory())
+        # loop.run_forever()
+
 
 
         #buttons
@@ -122,15 +116,16 @@ class UI(QMainWindow):
         self.action1_Week.triggered.connect(lambda:self.setLogfileLoadRange(100))
         self.action1_Month.triggered.connect(lambda:self.setLogfileLoadRange(10))
         self.action100_Days.triggered.connect(lambda:self.setLogfileLoadRange(1))
-        self.action12pt_2.triggered.connect(lambda:self.setTextSize(10000))
-        self.action14pt_2.triggered.connect(lambda:self.setTextSize(1000))
-        self.action16pt_2.triggered.connect(lambda:self.setTextSize(100))
-        self.action20pt_2.triggered.connect(lambda:self.setTextSize(10))
-        self.action32pt_2.triggered.connect(lambda:self.setTextSize(1))
+        self.action9pt_2.triggered.connect(lambda:self.setTextSize(10000))
+        self.action10pt_2.triggered.connect(lambda:self.setTextSize(1000))
+        self.action12pt_2.triggered.connect(lambda:self.setTextSize(100))
+        self.action16pt_2.triggered.connect(lambda:self.setTextSize(10))
+        self.action24pt_2.triggered.connect(lambda:self.setTextSize(1))
         self.actionHide_Finished_Resources.triggered.connect(lambda:self.displayColony())
         self.stationList.currentIndexChanged.connect(lambda:self.displayColony())
         self.shipList.currentIndexChanged.connect(lambda:self.updateCargoSpace())
         self.update.clicked.connect(lambda:self.getLogFileData())
+        self.actionload_stats.triggered.connect(lambda:self.getScsStats())
 
 
         self.actionQuit.triggered.connect(lambda:self.saveAndQuit())
@@ -173,35 +168,34 @@ class UI(QMainWindow):
                 self.olderThanNumDays = 0
 
         self.getEliteTime(loadTimeSelect)
-        # self.populateStationList()
         self.getLogFileData()
 
     def setTextSize(self,textsize):
 
+        self.action9pt_2.setChecked(False)
+        self.action10pt_2.setChecked(False)
         self.action12pt_2.setChecked(False)
-        self.action14pt_2.setChecked(False)
         self.action16pt_2.setChecked(False)
-        self.action20pt_2.setChecked(False)
-        self.action32pt_2.setChecked(False)
+        self.action24pt_2.setChecked(False)
 
         match textsize:
             case 10000:
+                self.action9pt_2.setChecked(True)
+                self.allTextSize = 9
+            case 1000:
+                self.action10pt_2.setChecked(True)
+                self.allTextSize = 10
+            case 100:
                 self.action12pt_2.setChecked(True)
                 self.allTextSize = 12
-            case 1000:
-                self.action14pt_2.setChecked(True)
-                self.allTextSize = 14
-            case 100:
+            case 10:
                 self.action16pt_2.setChecked(True)
                 self.allTextSize = 16
-            case 10:
-                self.action20pt_2.setChecked(True)
-                self.allTextSize = 20
             case 1:
-                self.action32pt_2.setChecked(True)
-                self.allTextSize = 32
+                self.action24pt_2.setChecked(True)
+                self.allTextSize = 24
             case _:
-                self.action14pt_2 = 14
+                self.allTextSize = 14
         self.formatResourceTable()
 
     def getFileSettings(self):
@@ -236,7 +230,7 @@ class UI(QMainWindow):
                     if line.startswith("Get_stats:"):
                         if isinstance(int(line.split("Get_stats:",1)[1].strip()),int):
                             getStatsBoxIsChecked = bool(int(line.split("Get_stats: ",1)[1].strip()))
-                            self.actionload_stats_on_start.setChecked(getStatsBoxIsChecked)
+                            self.actionload_stats.setChecked(getStatsBoxIsChecked)
 
         if os.path.exists("stationList.pickle"):
             with open("stationList.pickle", 'rb') as st:
@@ -280,10 +274,6 @@ class UI(QMainWindow):
         with open(logfile, "r", encoding='iso-8859-1') as f1, open("ships.txt","w", encoding='iso-8859-1') as f3:
             for line in f1:
                 rawLine = json.loads(line)
-                # print("LogFile: ",logfile)
-                # if str(self.mostRecentReadTime) > rawLine["timestamp"]:
-                #     continue
-
                 # self.mostRecentReadTime = rawLine["timestamp"]
                 foundExistingColony = False
                 if "ConstructionProgress" in rawLine:
@@ -359,8 +349,9 @@ class UI(QMainWindow):
                     if "CargoCapacity" in rawLine:
                         if rawLine["CargoCapacity"] not in self.ships:
                             self.ships.append([rawLine["ShipIdent"],rawLine["CargoCapacity"],rawLine["timestamp"]])
+        print(f"All the ships: {self.ships}")
         if self.ships:
-            self.ships = sorted(self.ships, key=lambda ship:self.ships[2], reverse=True)
+            self.ships.sort(key=lambda ship:ship[2], reverse=True)
 
             for ship in self.ships:
                 items = [self.shipList.itemText(i) for i in range(self.shipList.count())]
@@ -470,20 +461,19 @@ class UI(QMainWindow):
                 qAmountItem.setText(f"{total_need:,}".rjust(7))
                 qTripItem.setText(str(trips_remaining).rjust(7))
 
-                print("The need: ",type(current_need))
+                print(f"The need: {int(current_need)} The total: {int(total_need)}")
                 if int(current_need) == 0:
                     doneState = 1
-                elif(int(current_need) == int(total_need)):
-                    doneState = -1
-                else:
-                    doneState = 0
-                if doneState == 1:
                     qCurrentItem.setText("Done")
                     qCurrentItem.setTextAlignment(Qt.AlignmentFlag.AlignCenter)
-                else:
+                elif(int(current_need) == int(total_need)):
+                    doneState = -1
                     qCurrentItem.setText(f"{current_need:,}".rjust(7))
                     qCurrentItem.setTextAlignment(Qt.AlignmentFlag.AlignRight)
-                print(f"done? {doneState}")
+                else:
+                    doneState = 0
+                    qCurrentItem.setText(f"{current_need:,}".rjust(7))
+                    qCurrentItem.setTextAlignment(Qt.AlignmentFlag.AlignRight)
 
                 qTypeItem.setFlags(Qt.ItemFlag.ItemIsSelectable | Qt.ItemFlag.ItemIsEnabled)
                 qResourceItem.setFlags(Qt.ItemFlag.ItemIsSelectable | Qt.ItemFlag.ItemIsEnabled)
@@ -524,16 +514,16 @@ class UI(QMainWindow):
         for i in range(self.resourceTableList.rowCount()):
             self.resourceTableList.setRowHeight(i, self.allTextSize+15)
         self.resourceTableList.setFont(QFont('Calibri',self.allTextSize))
-        self.resourceTableList.setColumnWidth(0, int(14.6 * self.allTextSize))
-        self.resourceTableList.setColumnWidth(1, int(19 * self.allTextSize))
-        self.resourceTableList.setColumnWidth(2, int(11 * self.allTextSize))
-        self.resourceTableList.setColumnWidth(3, int(9 * self.allTextSize))
+        self.resourceTableList.setColumnWidth(0, int(13 * self.allTextSize))
+        self.resourceTableList.setColumnWidth(1, int(18 * self.allTextSize))
+        self.resourceTableList.setColumnWidth(2, int(7 * self.allTextSize))
+        self.resourceTableList.setColumnWidth(3, int(8 * self.allTextSize))
         self.resourceTableList.setColumnWidth(4, int(9 * self.allTextSize))
         self.resourceTableList.setColumnWidth(5, int(15 * self.allTextSize))
         self.resourceTableList.verticalHeader().setVisible(False)
         self.resourceTableList.setSortingEnabled(True)
 
-        self.resourceTableList.horizontalHeader().setStyleSheet(f"color: snow; font-size: {self.allTextSize}px; font-weight: bold; background-color: rgb(20, 28, 160);")
+        self.resourceTableList.horizontalHeader().setStyleSheet(f"color: snow; font-size: {self.allTextSize}px; font-weight: bold; background-color: rgb(20, 28, 160)")
 
         self.scrollArea.setWidget(self.resourceTableList)
 
@@ -548,7 +538,6 @@ class UI(QMainWindow):
 
         if self.resourceTableList:
             for trip in range(self.resourceTableList.rowCount()):
-                print(f"Is this an int? {isinstance(stillNeeded,int)}")
                 if self.resourceTableList.item(trip,     4):
                     tripsCalc += float(self.resourceTableList.item(trip, 4).text())
                 if self.resourceTableList.item(trip, 2):
@@ -585,18 +574,16 @@ class UI(QMainWindow):
                     widget.deleteLater()  # Safely delete the widget
                 layout.removeItem(item)  # Remove the item from the layout
 
-    def monitor_directory(self):
+    async def monitor_directory(self):
+
         print("Checking for new file...")
-        if(platform.system() == 'Windows'):
-            defaultFileDir = os.path.expandvars(r"C:\Users\$USERNAME") + r'\Saved Games\Frontier Developments\Elite Dangerous'
-        elif(platform.system() == 'Linux'):
-            defaultFileDir = os.path.expanduser("~") + '/.local/share/Steam/steamapps/compatdata/359320/pfx/drive_c/users/steamuser/Saved Games/Frontier Developments/Elite Dangerous'
+        folderdir = self.LogFileDialog.FileNamelineEdit.text()
         expectedFile = time.strftime("%Y-%m-%dT%H", time.localtime())
-        expectedFile =os.path.join(defaultFileDir, "Journal." + expectedFile + '*'+".log")
+        expectedFile =os.path.join(folderdir, "Journal." + expectedFile + '*'+".log")
 
         print("Looking for file like: ", expectedFile)
         realFiles = glob.glob(expectedFile, recursive=False)
-        if realFiles:
+        if realFiles and realFiles[0] != self.lastFileName:
             self.lastFileName = realFiles[0]
             print("Discovered new file: ", self.lastFileName)
 
@@ -628,9 +615,6 @@ class UI(QMainWindow):
                 self.resourceTypeDict[i["Name_Localised"]] = i["Category_Localised"]
 
     def getScsStats(self):
-        if not self.actionload_stats_on_start.isChecked():
-            return 0
-
         highestResource = {}
         lowestResource = {}
         averageResource = {}
@@ -721,17 +705,17 @@ class UI(QMainWindow):
                 + str(int(self.action1_Month.isChecked()))
                 + str(int(self.action100_Days.isChecked())))
             f.write("\nTable_size: ")
-            f.write(str(int(self.action12pt_2.isChecked()))
-                + str(int(self.action14pt_2.isChecked()))
+            f.write(str(int(self.action9pt_2.isChecked()))
+                + str(int(self.action10pt_2.isChecked()))
+                + str(int(self.action12pt_2.isChecked()))
                 + str(int(self.action16pt_2.isChecked()))
-                + str(int(self.action20pt_2.isChecked()))
-                + str(int(self.action32pt_2.isChecked())))
+                + str(int(self.action24pt_2.isChecked())))
             f.write("\nHide_resources: ")
             f.write(str(int(self.actionHide_Finished_Resources.isChecked())))
             f.write("\nHide_notes: ")
             f.write(str(int(self.actionHide_Notes.isChecked())))
             f.write("\nGet_stats: ")
-            f.write(str(int(self.actionload_stats_on_start.isChecked())))
+            f.write(str(int(self.actionload_stats.isChecked())))
 
             with open("stationList.pickle", 'wb') as st:
                 pickle.dump(self.uniqueStations, st)
