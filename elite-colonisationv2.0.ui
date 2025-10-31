@@ -299,8 +299,10 @@ QPushButton:hover {background-color: rgb(24, 90, 0);}</string>
      <addaction name="action24pt_2"/>
     </widget>
     <addaction name="actionHide_Finished_Resources"/>
-    <addaction name="actionHide_Notes"/>
+    <addaction name="actionHide_carrier_cargo"/>
+    <addaction name="actionHide_total_need"/>
     <addaction name="menuTable_Font_Size"/>
+    <addaction name="separator"/>
    </widget>
    <addaction name="menuFile"/>
    <addaction name="menuOptions"/>
@@ -382,12 +384,12 @@ QPushButton:hover {background-color: rgb(24, 90, 0);}</string>
     <string>32pt</string>
    </property>
   </action>
-  <action name="actionHide_Notes">
+  <action name="actionHide_carrier_cargo">
    <property name="checkable">
     <bool>true</bool>
    </property>
    <property name="text">
-    <string>Hide Notes</string>
+    <string>Hide Carrier Cargo Column</string>
    </property>
   </action>
   <action name="action9pt_2">
@@ -444,6 +446,14 @@ QPushButton:hover {background-color: rgb(24, 90, 0);}</string>
    </property>
    <property name="text">
     <string>load outpost SCS stats</string>
+   </property>
+  </action>
+  <action name="actionHide_total_need">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="text">
+    <string>Hide Total Need</string>
    </property>
   </action>
  </widget>

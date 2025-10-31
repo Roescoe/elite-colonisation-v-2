@@ -85,7 +85,8 @@ class UI(QMainWindow):
         self.resourceTypeDict = {}
         self.resourceTableList = QTableWidget()
         self.lastMarketEntry = {}
-        self.lastSortcolumn = 0
+        self.fleetCarrierMarket = []
+        self.tableLabels = []
         self.ships = []
 
         #initialize windows
@@ -121,9 +122,11 @@ class UI(QMainWindow):
         self.action12pt_2.triggered.connect(lambda:self.setTextSize(100))
         self.action16pt_2.triggered.connect(lambda:self.setTextSize(10))
         self.action24pt_2.triggered.connect(lambda:self.setTextSize(1))
+        self.actionHide_total_need.triggered.connect(lambda:self.updateTableDisplay())
+        self.actionHide_carrier_cargo.triggered.connect(lambda:self.updateTableDisplay())
         self.actionHide_Finished_Resources.triggered.connect(lambda:self.displayColony())
         self.stationList.currentIndexChanged.connect(lambda:self.displayColony())
-        self.shipList.currentIndexChanged.connect(lambda:self.updateCargoSpace())
+        self.shipList.currentIndexChanged.connect(lambda:self.displayColony())
         self.update.clicked.connect(lambda:self.getLogFileData())
         self.actionload_stats.triggered.connect(lambda:self.getScsStats())
 
@@ -216,17 +219,21 @@ class UI(QMainWindow):
                         print("Found table size in settings")
                         if isinstance(int(line.split("Table_size: ",1)[1].strip()), int):
                             tableSizeIndex = int(line.split("Table_size: ",1)[1].strip())
-                            self.setTextSize(tableSizeIndex)
                     if line.startswith("Hide_resources:"):
                         print("Found checkbox in settings \'"+ line.split("Hide_resources: ",1)[1].strip()+"\'")
                         if isinstance(int(line.split("Hide_resources: ",1)[1].strip()), int):
                             hideBoxIsChecked = bool(int(line.split("Hide_resources: ",1)[1].strip()))
                             self.actionHide_Finished_Resources.setChecked(hideBoxIsChecked)
-                    if line.startswith("Hide_notes:"):
-                        print("Found checkbox in settings \'"+ line.split("Hide_notes: ",1)[1].strip()+"\'")
-                        if isinstance(int(line.split("Hide_notes: ",1)[1].strip()), int):
-                            hideBoxIsChecked = bool(int(line.split("Hide_notes: ",1)[1].strip()))
-                            self.actionHide_Notes.setChecked(hideBoxIsChecked)
+                    if line.startswith("Hide_carrier_cargo:"):
+                        print("Found checkbox in settings \'"+ line.split("Hide_carrier_cargo: ",1)[1].strip()+"\'")
+                        if isinstance(int(line.split("Hide_carrier_cargo: ",1)[1].strip()), int):
+                            hideBoxIsChecked = bool(int(line.split("Hide_carrier_cargo: ",1)[1].strip()))
+                            self.actionHide_carrier_cargo.setChecked(hideBoxIsChecked)
+                    if line.startswith("Hide_total_need:"):
+                        print("Found checkbox in settings \'"+ line.split("Hide_total_need: ",1)[1].strip()+"\'")
+                        if isinstance(int(line.split("Hide_total_need: ",1)[1].strip()), int):
+                            hideBoxIsChecked = bool(int(line.split("Hide_total_need: ",1)[1].strip()))
+                            self.actionHide_total_need.setChecked(hideBoxIsChecked)
                     if line.startswith("Get_stats:"):
                         if isinstance(int(line.split("Get_stats:",1)[1].strip()),int):
                             getStatsBoxIsChecked = bool(int(line.split("Get_stats: ",1)[1].strip()))
@@ -362,12 +369,15 @@ class UI(QMainWindow):
             self.cargoSpace.setText(current_ship.split("(",1)[1].split(")",1)[0])
         print("Got Ships.")
 
-    def updateCargoSpace(self):
-        current_ship = self.shipList.currentText()
-        self.cargoSpace.setText(current_ship.split("(",1)[1].split(")",1)[0])
-        self.setupResourceTable()
-        self.formatResourceTable()
-        self.displayColonyStats()
+    def updateTableDisplay(self):
+        if self.actionHide_total_need.isChecked():
+            self.resourceTableList.setColumnHidden(self.tableLabels.index("Total Need"), True)
+        else:
+            self.resourceTableList.setColumnHidden(self.tableLabels.index("Total Need"), False)
+        if self.actionHide_carrier_cargo.isChecked():
+            self.resourceTableList.setColumnHidden(self.tableLabels.index("Carrier Need"), True)
+        else:
+            self.resourceTableList.setColumnHidden(self.tableLabels.index("Carrier Need"), False)
 
     def displayColony(self):
         selectedMarketID = -1
@@ -382,10 +392,10 @@ class UI(QMainWindow):
 
         #TODO write to current data file also could just use other file
         readLocation = "currentImportantData.txt"
-        if not self.findMarketEnty(selectedMarketID, readLocation):
+        if not self.findMarketEntry(selectedMarketID, readLocation):
             print("Not found in current file")
             readLocation = "importantLogs.txt"
-            self.findMarketEnty(selectedMarketID, readLocation)
+            self.findMarketEntry(selectedMarketID, readLocation)
         else:
             print("Found in current file")
             pass
@@ -394,7 +404,7 @@ class UI(QMainWindow):
         self.formatResourceTable()
         self.displayColonyStats()
 
-    def findMarketEnty(self, selectedMarketID, sourceFile):
+    def findMarketEntry(self, selectedMarketID, sourceFile):
         foundEntry = False
         self.lastMarketEntry.clear()
         if os.path.exists(sourceFile):
@@ -424,17 +434,17 @@ class UI(QMainWindow):
         qAmountItems = []
         qCurrentItems = []
         qTripItems = []
+        qFleetCarrier = []
         cargo = 0
         doneState = -1
 
         if len(self.shipList) > 0:
             cargo = int(self.cargoSpace.text())
         self.resourceTableList.clear()
+        self.tableLabels.clear()
 
         print("Latest Entry:", self.lastMarketEntry)
         if "ResourcesRequired" in self.lastMarketEntry:
-            self.resourceTableList.setRowCount(len(self.lastMarketEntry["ResourcesRequired"]))
-            self.resourceTableList.setColumnCount(6)
             print(f'Num resources listed: {len(self.lastMarketEntry["ResourcesRequired"])}')
             for i in range(len(self.lastMarketEntry["ResourcesRequired"])):
                 
@@ -491,19 +501,31 @@ class UI(QMainWindow):
                 qTripItems.append(qTripItem)
 
 
+        self.tableLabels.append("Category")
+        self.tableLabels.append("Resource")
+        self.tableLabels.append("Total Need")
+        self.tableLabels.append("Current Need")
+        self.tableLabels.append("Trips Remaining")
+        self.tableLabels.append("Carrier Need")
+        self.resourceTableList.setRowCount(len(self.lastMarketEntry["ResourcesRequired"]))
+        self.resourceTableList.setColumnCount(len(self.tableLabels))
+        print(f"tableLabels: {self.tableLabels}")
+
+        currentColumn = 0
         for i, qResource in enumerate(qResourceItems):
-            self.resourceTableList.setItem(i, 0, qTypeItems[i])
-            self.resourceTableList.setItem(i, 1, qResource)
-            self.resourceTableList.setItem(i, 2, qAmountItems[i])
-            self.resourceTableList.setItem(i, 3, qCurrentItems[i][0])
+            self.resourceTableList.setItem(i, self.tableLabels.index("Category"), qTypeItems[i])
+            self.resourceTableList.setItem(i, self.tableLabels.index("Resource"), qResource)
+            self.resourceTableList.setItem(i, self.tableLabels.index("Total Need"), qAmountItems[i])
+            needIndex = self.tableLabels.index("Current Need")
+            self.resourceTableList.setItem(i, needIndex, qCurrentItems[i][0])
             if qCurrentItems[i][1] == 1:
-                self.resourceTableList.item(i, 3).setBackground(QColor("green"))
+                self.resourceTableList.item(i, needIndex).setBackground(QColor("green"))
             elif qCurrentItems[i][1] == -1:
-                self.resourceTableList.item(i, 3).setBackground(QColor("#c32148"))
+                self.resourceTableList.item(i, needIndex).setBackground(QColor("#c32148"))
             elif qCurrentItems[i][1] == 0:
-                self.resourceTableList.item(i, 3).setBackground(QColor("#281E5D"))
-            self.resourceTableList.setItem(i, 4, qTripItems[i])
-        self.resourceTableList.setHorizontalHeaderLabels(["Category", "Resource", "Total Need", "Current Need", "Trips Remaining", "Notes"])
+                self.resourceTableList.item(i, needIndex).setBackground(QColor("#281E5D"))
+            self.resourceTableList.setItem(i, self.tableLabels.index("Trips Remaining"), qTripItems[i])
+        self.resourceTableList.setHorizontalHeaderLabels(self.tableLabels)
 
         # self.resourceTableList.horizontalHeader().setSectionResizeMode(QHeaderView.ResizeMode.Stretch)
         # self.resourceTableList.verticalHeader().setSectionResizeMode(QHeaderView.ResizeMode.Stretch)
@@ -514,15 +536,14 @@ class UI(QMainWindow):
         for i in range(self.resourceTableList.rowCount()):
             self.resourceTableList.setRowHeight(i, self.allTextSize+15)
         self.resourceTableList.setFont(QFont('Calibri',self.allTextSize))
-        self.resourceTableList.setColumnWidth(0, int(13 * self.allTextSize))
-        self.resourceTableList.setColumnWidth(1, int(18 * self.allTextSize))
-        self.resourceTableList.setColumnWidth(2, int(7 * self.allTextSize))
-        self.resourceTableList.setColumnWidth(3, int(8 * self.allTextSize))
-        self.resourceTableList.setColumnWidth(4, int(9 * self.allTextSize))
-        self.resourceTableList.setColumnWidth(5, int(15 * self.allTextSize))
+        self.resourceTableList.setColumnWidth(self.tableLabels.index("Category"), int(13 * self.allTextSize))
+        self.resourceTableList.setColumnWidth(self.tableLabels.index("Resource"), int(18 * self.allTextSize))
+        self.resourceTableList.setColumnWidth(self.tableLabels.index("Total Need"), int(7 * self.allTextSize))
+        self.resourceTableList.setColumnWidth(self.tableLabels.index("Current Need"), int(8 * self.allTextSize))
+        self.resourceTableList.setColumnWidth(self.tableLabels.index("Trips Remaining"), int(9 * self.allTextSize))
+        self.resourceTableList.setColumnWidth(self.tableLabels.index("Carrier Need"), int(15 * self.allTextSize))
         self.resourceTableList.verticalHeader().setVisible(False)
         self.resourceTableList.setSortingEnabled(True)
-
         self.resourceTableList.horizontalHeader().setStyleSheet(f"color: snow; font-size: {self.allTextSize}px; font-weight: bold; background-color: rgb(20, 28, 160)")
 
         self.scrollArea.setWidget(self.resourceTableList)
@@ -538,7 +559,7 @@ class UI(QMainWindow):
 
         if self.resourceTableList:
             for trip in range(self.resourceTableList.rowCount()):
-                if self.resourceTableList.item(trip,     4):
+                if "Trips Remaining" in self.tableLabels:
                     tripsCalc += float(self.resourceTableList.item(trip, 4).text())
                 if self.resourceTableList.item(trip, 2):
                     totalMaterials += int(self.resourceTableList.item(trip, 2).text().replace(',', ''))
@@ -712,8 +733,10 @@ class UI(QMainWindow):
                 + str(int(self.action24pt_2.isChecked())))
             f.write("\nHide_resources: ")
             f.write(str(int(self.actionHide_Finished_Resources.isChecked())))
-            f.write("\nHide_notes: ")
-            f.write(str(int(self.actionHide_Notes.isChecked())))
+            f.write("\nHide_carrier_cargo: ")
+            f.write(str(int(self.actionHide_carrier_cargo.isChecked())))
+            f.write("\nHide_total_need: ")
+            f.write(str(int(self.actionHide_total_need.isChecked())))
             f.write("\nGet_stats: ")
             f.write(str(int(self.actionload_stats.isChecked())))
 
