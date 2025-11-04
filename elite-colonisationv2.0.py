@@ -130,7 +130,6 @@ class UI(QMainWindow):
         self.update.clicked.connect(lambda:self.getLogFileData())
         self.actionload_stats.triggered.connect(lambda:self.getScsStats())
 
-
         self.actionQuit.triggered.connect(lambda:self.saveAndQuit())
 
     def showLogfileDialog(self):
@@ -275,7 +274,7 @@ class UI(QMainWindow):
 
     def getAllLogFileData(self, logfile):
         isUnique = True
-        stationType = "other"
+        stationType = ""
 
         print("Reading logfile: ", logfile.split("Journal.",1)[1])
         with open(logfile, "r", encoding='iso-8859-1') as f1, open("ships.txt","w", encoding='iso-8859-1') as f3:
@@ -308,18 +307,19 @@ class UI(QMainWindow):
                     if isUnique == True:
                         if rawLine["StationName"].startswith("$EXT_PANEL_"):
                             cleanStationName = rawLine["StarSystem"] + ": " + rawLine["StationName"].split("$EXT_PANEL_",1)[1] + " (" + str(rawLine["MarketID"])+")"
+                            stationType = "colony"
                         else:    
                             cleanStationName = rawLine["StationName"] + " (" + str(rawLine["MarketID"])+")"
-                        print("Saving " +cleanStationName+" to data struc")
-                        if rawLine["StationType"] == "SurfaceStation" or rawLine["StationType"] == "SpaceConstructionDepot":
-                            if "StationState" in rawLine:
-                                stationType = "constructed"
+                            StationTypeInFile = rawLine["StationType"]
+                            if StationTypeInFile == "SpaceConstructionDepot" or StationTypeInFile == "PlanetaryConstructionDepot":
+                                if "StationState" in rawLine:
+                                    stationType = "constructed"
+                                else:
+                                    stationType = "colony"
+                            elif StationTypeInFile == "FleetCarrier":
+                                stationType = "fleet"
                             else:
-                                stationType = "colony"
-                        elif rawLine["StationType"] == "FleetCarrier":
-                            stationType = "fleet"
-                        else:
-                            stationType = "other"
+                                stationType = "other"
                         # Station format: ID, Name, time accessed, type
                         self.uniqueStations.append([rawLine["MarketID"], cleanStationName, rawLine["timestamp"], stationType])
 
@@ -345,6 +345,7 @@ class UI(QMainWindow):
                 self.stationList.setCurrentIndex(0)
             else:
                 self.stationList.setCurrentIndex(savedIndex)
+        print(f"All stations: {self.uniqueStations}")
 
 
     def populateShipList(self):
@@ -370,14 +371,15 @@ class UI(QMainWindow):
         print("Got Ships.")
 
     def updateTableDisplay(self):
-        if self.actionHide_total_need.isChecked():
-            self.resourceTableList.setColumnHidden(self.tableLabels.index("Total Need"), True)
-        else:
-            self.resourceTableList.setColumnHidden(self.tableLabels.index("Total Need"), False)
-        if self.actionHide_carrier_cargo.isChecked():
-            self.resourceTableList.setColumnHidden(self.tableLabels.index("Carrier Need"), True)
-        else:
-            self.resourceTableList.setColumnHidden(self.tableLabels.index("Carrier Need"), False)
+        if self.tableLabels:
+            if self.actionHide_total_need.isChecked():
+                self.resourceTableList.setColumnHidden(self.tableLabels.index("Total Need"), True)
+            else:
+                self.resourceTableList.setColumnHidden(self.tableLabels.index("Total Need"), False)
+            if self.actionHide_carrier_cargo.isChecked():
+                self.resourceTableList.setColumnHidden(self.tableLabels.index("Carrier Need"), True)
+            else:
+                self.resourceTableList.setColumnHidden(self.tableLabels.index("Carrier Need"), False)
 
     def displayColony(self):
         selectedMarketID = -1
@@ -403,6 +405,8 @@ class UI(QMainWindow):
         self.setupResourceTable()
         self.formatResourceTable()
         self.displayColonyStats()
+        self.updateTableDisplay()
+        self.setFleetCarriers()
 
     def findMarketEntry(self, selectedMarketID, sourceFile):
         foundEntry = False
@@ -500,32 +504,30 @@ class UI(QMainWindow):
                 qCurrentItems.append([qCurrentItem, doneState])
                 qTripItems.append(qTripItem)
 
+            self.tableLabels.append("Category")
+            self.tableLabels.append("Resource")
+            self.tableLabels.append("Total Need")
+            self.tableLabels.append("Current Need")
+            self.tableLabels.append("Trips Remaining")
+            self.tableLabels.append("Carrier Need")
+            self.resourceTableList.setRowCount(len(self.lastMarketEntry["ResourcesRequired"]))
+            self.resourceTableList.setColumnCount(len(self.tableLabels))
+            print(f"tableLabels: {self.tableLabels}")
 
-        self.tableLabels.append("Category")
-        self.tableLabels.append("Resource")
-        self.tableLabels.append("Total Need")
-        self.tableLabels.append("Current Need")
-        self.tableLabels.append("Trips Remaining")
-        self.tableLabels.append("Carrier Need")
-        self.resourceTableList.setRowCount(len(self.lastMarketEntry["ResourcesRequired"]))
-        self.resourceTableList.setColumnCount(len(self.tableLabels))
-        print(f"tableLabels: {self.tableLabels}")
-
-        currentColumn = 0
-        for i, qResource in enumerate(qResourceItems):
-            self.resourceTableList.setItem(i, self.tableLabels.index("Category"), qTypeItems[i])
-            self.resourceTableList.setItem(i, self.tableLabels.index("Resource"), qResource)
-            self.resourceTableList.setItem(i, self.tableLabels.index("Total Need"), qAmountItems[i])
-            needIndex = self.tableLabels.index("Current Need")
-            self.resourceTableList.setItem(i, needIndex, qCurrentItems[i][0])
-            if qCurrentItems[i][1] == 1:
-                self.resourceTableList.item(i, needIndex).setBackground(QColor("green"))
-            elif qCurrentItems[i][1] == -1:
-                self.resourceTableList.item(i, needIndex).setBackground(QColor("#c32148"))
-            elif qCurrentItems[i][1] == 0:
-                self.resourceTableList.item(i, needIndex).setBackground(QColor("#281E5D"))
-            self.resourceTableList.setItem(i, self.tableLabels.index("Trips Remaining"), qTripItems[i])
-        self.resourceTableList.setHorizontalHeaderLabels(self.tableLabels)
+            for i, qResource in enumerate(qResourceItems):
+                self.resourceTableList.setItem(i, self.tableLabels.index("Category"), qTypeItems[i])
+                self.resourceTableList.setItem(i, self.tableLabels.index("Resource"), qResource)
+                self.resourceTableList.setItem(i, self.tableLabels.index("Total Need"), qAmountItems[i])
+                needIndex = self.tableLabels.index("Current Need")
+                self.resourceTableList.setItem(i, needIndex, qCurrentItems[i][0])
+                if qCurrentItems[i][1] == 1:
+                    self.resourceTableList.item(i, needIndex).setBackground(QColor("green"))
+                elif qCurrentItems[i][1] == -1:
+                    self.resourceTableList.item(i, needIndex).setBackground(QColor("#c32148"))
+                elif qCurrentItems[i][1] == 0:
+                    self.resourceTableList.item(i, needIndex).setBackground(QColor("#281E5D"))
+                self.resourceTableList.setItem(i, self.tableLabels.index("Trips Remaining"), qTripItems[i])
+            self.resourceTableList.setHorizontalHeaderLabels(self.tableLabels)
 
         # self.resourceTableList.horizontalHeader().setSectionResizeMode(QHeaderView.ResizeMode.Stretch)
         # self.resourceTableList.verticalHeader().setSectionResizeMode(QHeaderView.ResizeMode.Stretch)
@@ -536,12 +538,13 @@ class UI(QMainWindow):
         for i in range(self.resourceTableList.rowCount()):
             self.resourceTableList.setRowHeight(i, self.allTextSize+15)
         self.resourceTableList.setFont(QFont('Calibri',self.allTextSize))
-        self.resourceTableList.setColumnWidth(self.tableLabels.index("Category"), int(13 * self.allTextSize))
-        self.resourceTableList.setColumnWidth(self.tableLabels.index("Resource"), int(18 * self.allTextSize))
-        self.resourceTableList.setColumnWidth(self.tableLabels.index("Total Need"), int(7 * self.allTextSize))
-        self.resourceTableList.setColumnWidth(self.tableLabels.index("Current Need"), int(8 * self.allTextSize))
-        self.resourceTableList.setColumnWidth(self.tableLabels.index("Trips Remaining"), int(9 * self.allTextSize))
-        self.resourceTableList.setColumnWidth(self.tableLabels.index("Carrier Need"), int(15 * self.allTextSize))
+        if len(self.tableLabels) > 0:
+            self.resourceTableList.setColumnWidth(self.tableLabels.index("Category"), int(13 * self.allTextSize))
+            self.resourceTableList.setColumnWidth(self.tableLabels.index("Resource"), int(18 * self.allTextSize))
+            self.resourceTableList.setColumnWidth(self.tableLabels.index("Total Need"), int(7 * self.allTextSize))
+            self.resourceTableList.setColumnWidth(self.tableLabels.index("Current Need"), int(8 * self.allTextSize))
+            self.resourceTableList.setColumnWidth(self.tableLabels.index("Trips Remaining"), int(9 * self.allTextSize))
+            self.resourceTableList.setColumnWidth(self.tableLabels.index("Carrier Need"), int(15 * self.allTextSize))
         self.resourceTableList.verticalHeader().setVisible(False)
         self.resourceTableList.setSortingEnabled(True)
         self.resourceTableList.horizontalHeader().setStyleSheet(f"color: snow; font-size: {self.allTextSize}px; font-weight: bold; background-color: rgb(20, 28, 160)")
@@ -557,21 +560,20 @@ class UI(QMainWindow):
 
         print("Calculating various stats...")
 
-        if self.resourceTableList:
+        if self.resourceTableList and len(self.tableLabels) > 0:
             for trip in range(self.resourceTableList.rowCount()):
-                if "Trips Remaining" in self.tableLabels:
-                    tripsCalc += float(self.resourceTableList.item(trip, 4).text())
-                if self.resourceTableList.item(trip, 2):
-                    totalMaterials += int(self.resourceTableList.item(trip, 2).text().replace(',', ''))
-                if self.resourceTableList.item(trip, 3) and self.resourceTableList.item(trip, 3).text() != "Done":
-                    stillNeeded += int(self.resourceTableList.item(trip, 3).text().replace(',', ''))
+                if self.resourceTableList.item(trip, self.tableLabels.index("Trips Remaining")):
+                    tripsCalc += float(self.resourceTableList.item(trip, self.tableLabels.index("Trips Remaining")).text())
+                if self.resourceTableList.item(trip, self.tableLabels.index("Total Need")):
+                    totalMaterials += int(self.resourceTableList.item(trip, self.tableLabels.index("Total Need")).text().replace(',', ''))
+                if self.resourceTableList.item(trip, self.tableLabels.index("Current Need")) and self.resourceTableList.item(trip, self.tableLabels.index("Current Need")).text() != "Done":
+                    stillNeeded += int(self.resourceTableList.item(trip, self.tableLabels.index("Current Need")).text().replace(',', ''))
         tripsCalc = round(tripsCalc, 2)
 
         if totalMaterials > 0:
             percentPerTrip = round(100 * int(self.cargoSpace.text()) / totalMaterials, 2)
         if stillNeeded > 0:
             percentComplete = round(100 * (1 - stillNeeded/totalMaterials), 2)
-
 
         self.trips_left.setFont(QFont('Calibri',14))
         self.percent_per_trip.setFont(QFont('Calibri',14))
@@ -584,6 +586,13 @@ class UI(QMainWindow):
         self.total_materials.setText(f"Total Materials: {totalMaterials:,}")
         self.materials_still_needed.setText(f"Materials Still Needed: {stillNeeded:,}")
         self.percent_complete.setText(f"Percent Complete: {percentComplete}%")
+
+    def setFleetCarriers(self):
+        for station in self.uniqueStations:
+            if self.eliteFileTime < station[2]:
+                if station[3] == "fleet":
+                    self.fleetCarrierMarket.append([str(station[1]).split("(",1)[1].split(")",1)[0]])
+        print(f"fleetCarrierMarket: {self.fleetCarrierMarket}")
 
     def clear_layout(self, layout):
         for i in reversed(range(layout.count())):
