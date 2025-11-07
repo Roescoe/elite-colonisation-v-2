@@ -97,9 +97,9 @@ class UI(QMainWindow):
         self.LogFileDialog = LogFileDialogClass()
 
         #set up stuff
+        self.setGoodsList()
         self.getFileSettings()
         self.getLogFileData()
-        self.setGoodsList()
         self.populateShipList()
         self.displayColony()
 
@@ -124,7 +124,7 @@ class UI(QMainWindow):
         self.action24pt_2.triggered.connect(lambda:self.setTextSize(1))
         self.actionHide_total_need.triggered.connect(lambda:self.updateTableDisplay())
         self.actionHide_carrier_cargo.triggered.connect(lambda:self.updateTableDisplay())
-        self.actionHide_Finished_Resources.triggered.connect(lambda:self.displayColony())
+        self.actionHide_Finished_Resources.triggered.connect(lambda:self.updateTableDisplay())
         self.stationList.currentIndexChanged.connect(lambda:self.displayColony())
         self.shipList.currentIndexChanged.connect(lambda:self.displayColony())
         self.update.clicked.connect(lambda:self.getLogFileData())
@@ -170,7 +170,6 @@ class UI(QMainWindow):
                 self.olderThanNumDays = 0
 
         self.getEliteTime(loadTimeSelect)
-        self.getLogFileData()
 
     def setTextSize(self,textsize):
 
@@ -380,6 +379,13 @@ class UI(QMainWindow):
                 self.resourceTableList.setColumnHidden(self.tableLabels.index("Carrier Need"), True)
             else:
                 self.resourceTableList.setColumnHidden(self.tableLabels.index("Carrier Need"), False)
+            if self.actionHide_Finished_Resources.isChecked():
+                for row in range(self.resourceTableList.rowCount()):
+                    if self.resourceTableList.item(row, self.tableLabels.index("Current Need")).text() == 'Done':
+                        self.resourceTableList.setRowHidden(row, True)
+            else:
+                for row in range(self.resourceTableList.rowCount()):
+                    self.resourceTableList.showRow(row)
 
     def displayColony(self):
         selectedMarketID = -1
@@ -459,9 +465,6 @@ class UI(QMainWindow):
                     trips_remaining = 0
                 else:
                     trips_remaining = round(current_need/cargo, 1)
-
-                if current_need == 0 and self.actionHide_Finished_Resources.isChecked():
-                    continue
 
                 qTypeItem = QTableWidgetItem()
                 qResourceItem = QTableWidgetItem()
