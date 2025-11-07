@@ -217,6 +217,7 @@ class UI(QMainWindow):
                         print("Found table size in settings")
                         if isinstance(int(line.split("Table_size: ",1)[1].strip()), int):
                             tableSizeIndex = int(line.split("Table_size: ",1)[1].strip())
+                            self.setTextSize(tableSizeIndex)
                     if line.startswith("Hide_resources:"):
                         print("Found checkbox in settings \'"+ line.split("Hide_resources: ",1)[1].strip()+"\'")
                         if isinstance(int(line.split("Hide_resources: ",1)[1].strip()), int):
