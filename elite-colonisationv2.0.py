@@ -127,7 +127,7 @@ class UI(QMainWindow):
         self.actionHide_Finished_Resources.triggered.connect(lambda:self.updateTableDisplay())
         self.stationList.currentIndexChanged.connect(lambda:self.displayColony())
         self.shipList.currentIndexChanged.connect(lambda:self.displayColony())
-        self.update.clicked.connect(lambda:self.getLogFileData())
+        self.update.clicked.connect(lambda:self.updateTableData())
         self.actionload_stats.triggered.connect(lambda:self.getScsStats())
 
         self.actionQuit.triggered.connect(lambda:self.saveAndQuit())
@@ -139,6 +139,9 @@ class UI(QMainWindow):
             print("Invalid file path")
             self.LogFileDialog.FileNamelineEdit.setText("")
 
+    def updateTableData(self):
+        self.getLogFileData()
+        self.displayColony()
 
     def setLogfileLoadRange(self, loadTimeSelect):
         
