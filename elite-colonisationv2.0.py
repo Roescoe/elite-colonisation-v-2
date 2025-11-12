@@ -112,11 +112,11 @@ class UI(QMainWindow):
 
         #buttons
         self.actionSet_logfile_location.triggered.connect(lambda:self.showLogfileDialog())
-        self.actionAll.triggered.connect(lambda:self.setLogfileLoadRange(10000))
-        self.action1_Day.triggered.connect(lambda:self.setLogfileLoadRange(1000))
-        self.action1_Week.triggered.connect(lambda:self.setLogfileLoadRange(100))
-        self.action1_Month.triggered.connect(lambda:self.setLogfileLoadRange(10))
-        self.action100_Days.triggered.connect(lambda:self.setLogfileLoadRange(1))
+        self.actionAll.triggered.connect(lambda:self.setLogfileLoadRange(10000,True))
+        self.action1_Day.triggered.connect(lambda:self.setLogfileLoadRange(1000,True))
+        self.action1_Week.triggered.connect(lambda:self.setLogfileLoadRange(100,True))
+        self.action1_Month.triggered.connect(lambda:self.setLogfileLoadRange(10,True))
+        self.action100_Days.triggered.connect(lambda:self.setLogfileLoadRange(1,True))
         self.action9pt_2.triggered.connect(lambda:self.setTextSize(10000))
         self.action10pt_2.triggered.connect(lambda:self.setTextSize(1000))
         self.action12pt_2.triggered.connect(lambda:self.setTextSize(100))
@@ -143,7 +143,7 @@ class UI(QMainWindow):
         self.getLogFileData()
         self.displayColony()
 
-    def setLogfileLoadRange(self, loadTimeSelect):
+    def setLogfileLoadRange(self, loadTimeSelect, refreshList):
         
         currentTime = time.time()
 
@@ -173,8 +173,10 @@ class UI(QMainWindow):
                 self.olderThanNumDays = 0
 
         self.getEliteTime(loadTimeSelect)
+        if refreshList:
+            self.updateTableData()
 
-    def setTextSize(self,textsize):
+    def setTextSize(self, textsize):
 
         self.action9pt_2.setChecked(False)
         self.action10pt_2.setChecked(False)
@@ -215,7 +217,7 @@ class UI(QMainWindow):
                         loadTimeSelect = int(line.split("Load_time_selection: ",1)[1].strip())
                         print("Loading from time:", loadTimeSelect)
                         if loadTimeSelect:
-                            self.setLogfileLoadRange(loadTimeSelect)
+                            self.setLogfileLoadRange(loadTimeSelect, False)
                     if line.startswith("Table_size:"):
                         print("Found table size in settings")
                         if isinstance(int(line.split("Table_size: ",1)[1].strip()), int):
@@ -385,11 +387,15 @@ class UI(QMainWindow):
                 self.resourceTableList.setColumnHidden(self.tableLabels.index("Carrier Need"), False)
             if self.actionHide_Finished_Resources.isChecked():
                 for row in range(self.resourceTableList.rowCount()):
-                    if self.resourceTableList.item(row, self.tableLabels.index("Current Need")).text() == 'Done':
-                        self.resourceTableList.setRowHidden(row, True)
+                    if self.resourceTableList.item(row, self.tableLabels.index("Current Need")) is not None:
+                        if self.resourceTableList.item(row, self.tableLabels.index("Current Need")).text() == 'Done':
+                            self.resourceTableList.setRowHidden(row, True)
+                        else:
+                            self.resourceTableList.setRowHidden(row, False)
             else:
                 for row in range(self.resourceTableList.rowCount()):
                     self.resourceTableList.showRow(row)
+
 
     def displayColony(self):
         selectedMarketID = -1
