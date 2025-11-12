@@ -125,7 +125,7 @@ class UI(QMainWindow):
         self.actionHide_total_need.triggered.connect(lambda:self.updateTableDisplay())
         self.actionHide_carrier_cargo.triggered.connect(lambda:self.updateTableDisplay())
         self.actionHide_Finished_Resources.triggered.connect(lambda:self.updateTableDisplay())
-        self.stationList.currentIndexChanged.connect(lambda:self.displayColony())
+        self.stationList.activated.connect(lambda:self.updateTableData())
         self.shipList.currentIndexChanged.connect(lambda:self.displayColony())
         self.update.clicked.connect(lambda:self.updateTableData())
         self.actionload_stats.triggered.connect(lambda:self.getScsStats())
