@@ -250,6 +250,32 @@ QPushButton:hover {background-color: rgb(24, 90, 0);}</string>
      <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
     </property>
    </widget>
+   <widget class="QLabel" name="carrierLabel">
+    <property name="geometry">
+     <rect>
+      <x>816</x>
+      <y>60</y>
+      <width>51</width>
+      <height>20</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>Carrier:</string>
+    </property>
+    <property name="alignment">
+     <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+    </property>
+   </widget>
+   <widget class="QComboBox" name="carrierSelect">
+    <property name="geometry">
+     <rect>
+      <x>870</x>
+      <y>60</y>
+      <width>191</width>
+      <height>25</height>
+     </rect>
+    </property>
+   </widget>
   </widget>
   <widget class="QMenuBar" name="menubar">
    <property name="geometry">

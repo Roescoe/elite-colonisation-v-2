@@ -100,7 +100,7 @@ class UI(QMainWindow):
         self.setGoodsList()
         self.getFileSettings()
         self.getLogFileData()
-        self.populateShipList()
+        
         self.displayColony()
 
         # loop = asyncio.new_event_loop()
@@ -255,6 +255,8 @@ class UI(QMainWindow):
             self.getAllLogFileData(logfile)
         self.saveColonies("importantLogs.txt")
         self.populateStationList()
+        self.populateShipList()
+        self.populateCarrierList()
 
     def findLogfiles(self):
         folderdir = self.LogFileDialog.FileNamelineEdit.text()
@@ -375,7 +377,19 @@ class UI(QMainWindow):
             self.cargoSpace.setText(current_ship.split("(",1)[1].split(")",1)[0])
         print("Got Ships.")
 
+    def populateCarrierList(self):
+        if self.uniqueStations:
+            for station in self.uniqueStations:
+                if self.eliteFileTime < station[2]:
+                    if station[3] == "fleet":
+                        items = [self.carrierSelect.itemText(i) for i in range(self.carrierSelect.count())]
+                        print("items")
+                        if station[3] not in items:
+                            self.carrierSelect.addItem(str(f"{station[1]}"))
+
+
     def updateTableDisplay(self):
+        print("Selected menu option")
         if self.tableLabels:
             if self.actionHide_total_need.isChecked():
                 self.resourceTableList.setColumnHidden(self.tableLabels.index("Total Need"), True)
@@ -385,17 +399,15 @@ class UI(QMainWindow):
                 self.resourceTableList.setColumnHidden(self.tableLabels.index("Carrier Need"), True)
             else:
                 self.resourceTableList.setColumnHidden(self.tableLabels.index("Carrier Need"), False)
-            if self.actionHide_Finished_Resources.isChecked():
-                for row in range(self.resourceTableList.rowCount()):
+            for row in range(self.resourceTableList.rowCount()):
+                if self.actionHide_Finished_Resources.isChecked():
                     if self.resourceTableList.item(row, self.tableLabels.index("Current Need")) is not None:
                         if self.resourceTableList.item(row, self.tableLabels.index("Current Need")).text() == 'Done':
                             self.resourceTableList.setRowHidden(row, True)
                         else:
                             self.resourceTableList.setRowHidden(row, False)
-            else:
-                for row in range(self.resourceTableList.rowCount()):
-                    self.resourceTableList.showRow(row)
-
+                else:
+                    self.resourceTableList.setRowHidden(row, False)
 
     def displayColony(self):
         selectedMarketID = -1
@@ -523,6 +535,7 @@ class UI(QMainWindow):
             self.tableLabels.append("Current Need")
             self.tableLabels.append("Trips Remaining")
             self.tableLabels.append("Carrier Need")
+            self.tableLabels.append("Carrier Current")
             self.resourceTableList.setRowCount(len(self.lastMarketEntry["ResourcesRequired"]))
             self.resourceTableList.setColumnCount(len(self.tableLabels))
             print(f"tableLabels: {self.tableLabels}")
@@ -570,6 +583,8 @@ class UI(QMainWindow):
         totalMaterials = 0
         stillNeeded = 0
         percentComplete = 0
+        carrierNeed = []
+        carrierCurrent = []
 
         print("Calculating various stats...")
 
