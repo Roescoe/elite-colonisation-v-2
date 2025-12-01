@@ -88,6 +88,7 @@ class UI(QMainWindow):
         self.fleetCarrierMarket = []
         self.tableLabels = []
         self.ships = []
+        self.transactions = []
 
         #initialize windows
         uic.loadUi('elite-colonisationv2.0.ui', self)
@@ -102,6 +103,7 @@ class UI(QMainWindow):
         self.getLogFileData()
         
         self.displayColony()
+        self.calculateTransactions()
 
         # loop = asyncio.new_event_loop()
         # asyncio.set_event_loop(loop)
@@ -142,6 +144,7 @@ class UI(QMainWindow):
     def updateTableData(self):
         self.getLogFileData()
         self.displayColony()
+        self.calculateTransactions()
 
     def setLogfileLoadRange(self, loadTimeSelect, refreshList):
         
@@ -249,6 +252,8 @@ class UI(QMainWindow):
 
 
     def getLogFileData(self):
+        self.transactions.clear()
+
         print("Starting logfile gathering")
         self.findLogfiles()
         for logfile in self.logfiles:
@@ -257,6 +262,7 @@ class UI(QMainWindow):
         self.populateStationList()
         self.populateShipList()
         self.populateCarrierList()
+
 
     def findLogfiles(self):
         folderdir = self.LogFileDialog.FileNamelineEdit.text()
@@ -284,7 +290,7 @@ class UI(QMainWindow):
         stationType = ""
 
         print("Reading logfile: ", logfile.split("Journal.",1)[1])
-        with open(logfile, "r", encoding='iso-8859-1') as f1, open("ships.txt","w", encoding='iso-8859-1') as f3:
+        with open(logfile, "r", encoding='iso-8859-1') as f1:
             for line in f1:
                 rawLine = json.loads(line)
                 # self.mostRecentReadTime = rawLine["timestamp"]
@@ -301,14 +307,23 @@ class UI(QMainWindow):
                         print("Found an entry in the colony table " if self.colonies else "colony table has no entries in it")
                         self.colonies.append(rawLine)
 
-                    # f2.write(str(rawLine)+'\n')
                 if "Loadout" in rawLine.values() and int(rawLine["CargoCapacity"]) > 0:
                     # print("Found a ship")
-                    f3.write(str(rawLine)+'\n')
+                    if "CargoCapacity" in rawLine:
+                        if self.ships:
+                            for ship in self.ships:
+                                if str(rawLine["CargoCapacity"]) != str(ship[1]): # Cargo capacity is different
+                                    self.ships.append([rawLine["ShipIdent"],rawLine["CargoCapacity"],rawLine["timestamp"]])
+                                    break
+                        else:
+                            self.ships.append([rawLine["ShipIdent"],rawLine["CargoCapacity"],rawLine["timestamp"]])
                 if "Docked" in rawLine.values():
                     isUnique = True
-                    for station in self.uniqueStations:
+                    for i, station in enumerate(self.uniqueStations):
                         if str(rawLine["MarketID"]) == str(station[0]):
+                            if str(rawLine["StationType"]) == "FleetCarrier":
+                                cleanStationName = rawLine["StationName"] + " (" + str(rawLine["MarketID"])+")"
+                                self.uniqueStations[i] = [rawLine["MarketID"], cleanStationName, rawLine["timestamp"], "fleet"]
                             isUnique = False
                             break
                     if isUnique == True:
@@ -323,12 +338,12 @@ class UI(QMainWindow):
                                     stationType = "constructed"
                                 else:
                                     stationType = "colony"
-                            elif StationTypeInFile == "FleetCarrier":
-                                stationType = "fleet"
                             else:
                                 stationType = "other"
                         # Station format: ID, Name, time accessed, type
                         self.uniqueStations.append([rawLine["MarketID"], cleanStationName, rawLine["timestamp"], stationType])
+                if ("MarketSell" in rawLine.values() or "MarketBuy" in rawLine.values()):
+                    self.transactions.append(rawLine)
 
         self.lastFileName = logfile
 
@@ -340,7 +355,7 @@ class UI(QMainWindow):
     def populateStationList(self):
         # print("Stations and timeStamps: ",self.uniqueStations)
         if self.uniqueStations:
-            self.uniqueStations = sorted(self.uniqueStations, key=lambda station:station[2], reverse=True)
+            self.uniqueStations.sort(key=lambda station:station[2], reverse=True)
             savedIndex = self.stationList.currentIndex()
             self.stationList.clear()
             for station in self.uniqueStations:
@@ -356,14 +371,6 @@ class UI(QMainWindow):
 
 
     def populateShipList(self):
-        print("Getting Ships...")
-        if os.path.exists("ships.txt"):
-            with open("ships.txt","r", encoding='iso-8859-1') as f:
-                for line in f:
-                    rawLine = ast.literal_eval(line)
-                    if "CargoCapacity" in rawLine:
-                        if rawLine["CargoCapacity"] not in self.ships:
-                            self.ships.append([rawLine["ShipIdent"],rawLine["CargoCapacity"],rawLine["timestamp"]])
         print(f"All the ships: {self.ships}")
         if self.ships:
             self.ships.sort(key=lambda ship:ship[2], reverse=True)
@@ -378,15 +385,71 @@ class UI(QMainWindow):
         print("Got Ships.")
 
     def populateCarrierList(self):
+        carriers = []
         if self.uniqueStations:
+            self.carrierSelect.clear()
+            # self.stationList.sort(key=lambda station:station[2], reverse=True)
             for station in self.uniqueStations:
-                if self.eliteFileTime < station[2]:
-                    if station[3] == "fleet":
-                        items = [self.carrierSelect.itemText(i) for i in range(self.carrierSelect.count())]
-                        print("items")
-                        if station[3] not in items:
-                            self.carrierSelect.addItem(str(f"{station[1]}"))
+                print(f"is station: {station} a fleet Carrier?? {station[3] == 'fleet'}")
 
+                if station[3] == "fleet":
+                    items = [self.carrierSelect.itemText(i) for i in range(self.carrierSelect.count())]
+                    print(f"items {items} station {station[3]}")
+                    if station[3] not in items:
+                        carriers.append([str(station[1]), station[2]])
+            carriers.sort(key=lambda carrier:carrier[1], reverse=True)
+            self.carrierSelect.addItems(carriers[0])
+
+    def calculateTransactions(self):
+        commodities = []
+        currentFleetCommodityCargo = -1
+        transactionDict = {}
+        currentCarrier = str(self.carrierSelect.currentText().split("(",1)[1].split(")",1)[0])
+
+        print(f"*********Transactions: {self.transactions}")
+        for t in self.transactions:
+            transationVal = 0
+            if "Type_Localised" in t and str(t["MarketID"]) == currentCarrier:
+                print(f"The type: {t['Type_Localised']}")
+                if transactionDict:
+                    if str(t['Type_Localised']) in transactionDict:
+                        if str(t["event"]) == "MarketSell":
+                            print("Store")
+                            transationVal = int(t["Count"])
+                        elif str(t["event"]) == "MarketBuy":
+                            print("Withdraw")
+                            transationVal = int(t["Count"]) * -1
+                        else:
+                            transationVal = 0
+                        transationVal += transactionDict[t['Type_Localised']]
+                        transactionDict[t['Type_Localised']] =  transationVal
+                    else:
+                        transactionDict[t["Type_Localised"]] = t["Count"]
+                else:
+                    transactionDict[t["Type_Localised"]] = t["Count"]
+        print(f"The new cool table: {transactionDict}")
+        for res in transactionDict:
+            commodities = self.resourceTableList.findItems(res, Qt.MatchFlag.MatchContains)
+            if commodities:
+                commodityRow = commodities[0].row()
+                needItem = self.resourceTableList.item(commodityRow, self.tableLabels.index("Current Need")).text().replace(",","")
+                if needItem == "Done":
+                    needItem = 0
+                print(f"how much we need right now: {needItem}")
+                carrierNeed = str(int(needItem) - int(transactionDict[res]))
+                print(f"The carrier need: {carrierNeed}")
+
+                qCarrierCurItem = QTableWidgetItem()
+                qCarrierNeedItem = QTableWidgetItem()
+
+                qCarrierCurItem.setTextAlignment(Qt.AlignmentFlag.AlignRight)
+                qCarrierNeedItem.setTextAlignment(Qt.AlignmentFlag.AlignRight)
+
+                qCarrierCurItem.setText(str(transactionDict[res]))
+                qCarrierNeedItem.setText(carrierNeed)
+
+                self.resourceTableList.setItem(commodityRow, self.tableLabels.index("Carrier Current"), qCarrierCurItem)
+                self.resourceTableList.setItem(commodityRow, self.tableLabels.index("Carrier Need"), qCarrierNeedItem)
 
     def updateTableDisplay(self):
         print("Selected menu option")
@@ -456,9 +519,6 @@ class UI(QMainWindow):
                                 foundEntry = True
         print(f"The entry we're using: {self.lastMarketEntry} was updated? {foundEntry}")
         return foundEntry
-
-    def findFleetCarrierEntry(self, fleetCarrier, sourceFile):
-        pass
 
     def setupResourceTable(self):
         qTypeItems = []
