@@ -402,31 +402,41 @@ class UI(QMainWindow):
 
     def calculateTransactions(self):
         commodities = []
-        currentFleetCommodityCargo = -1
         transactionDict = {}
         currentCarrier = str(self.carrierSelect.currentText().split("(",1)[1].split(")",1)[0])
+        cargoNaming = {}
 
+        with open("Market.json", "r", encoding='iso-8859-1') as mj:
+            testFileLine = json.load(mj)
+
+        for i in testFileLine["Items"]:
+            if "Name" in i and "Name_Localised" in i:
+                cargoNaming[i["Name"].split("_",1)[0].split("$",1)[1]] = i["Name_Localised"]
+        print(f"cargoNaming: {cargoNaming}")
         print(f"*********Transactions: {self.transactions}")
         for t in self.transactions:
             transationVal = 0
-            if "Type_Localised" in t and str(t["MarketID"]) == currentCarrier:
-                print(f"The type: {t['Type_Localised']}")
+            if str(t["MarketID"]) == currentCarrier:
+                transactionResource = cargoNaming[t['Type']]
+                print(f"The type: {transactionResource}")
                 if transactionDict:
-                    if str(t['Type_Localised']) in transactionDict:
+                    if str(transactionResource) in transactionDict:
+                        print(f"Updating: {transactionResource}")
                         if str(t["event"]) == "MarketSell":
-                            print("Store")
+                            print(f"Store {t['Count']}")
                             transationVal = int(t["Count"])
                         elif str(t["event"]) == "MarketBuy":
-                            print("Withdraw")
+                            print(f"Withdraw {t['Count']}")
                             transationVal = int(t["Count"]) * -1
                         else:
                             transationVal = 0
-                        transationVal += transactionDict[t['Type_Localised']]
-                        transactionDict[t['Type_Localised']] =  transationVal
+                        transationVal += transactionDict[transactionResource]
+                        transactionDict[transactionResource] =  transationVal
                     else:
-                        transactionDict[t["Type_Localised"]] = t["Count"]
+                        print(f"Adding: {transactionResource}")
+                        transactionDict[transactionResource] = t["Count"]
                 else:
-                    transactionDict[t["Type_Localised"]] = t["Count"]
+                    transactionDict[transactionResource] = t["Count"]
         print(f"The new cool table: {transactionDict}")
         for res in transactionDict:
             commodities = self.resourceTableList.findItems(res, Qt.MatchFlag.MatchContains)
@@ -435,9 +445,9 @@ class UI(QMainWindow):
                 needItem = self.resourceTableList.item(commodityRow, self.tableLabels.index("Current Need")).text().replace(",","")
                 if needItem == "Done":
                     needItem = 0
-                print(f"how much we need right now: {needItem}")
+                # print(f"how much we need right now: {needItem}")
                 carrierNeed = str(int(needItem) - int(transactionDict[res]))
-                print(f"The carrier need: {carrierNeed}")
+                # print(f"The carrier need: {carrierNeed}")
 
                 qCarrierCurItem = QTableWidgetItem()
                 qCarrierNeedItem = QTableWidgetItem()
@@ -450,6 +460,7 @@ class UI(QMainWindow):
 
                 self.resourceTableList.setItem(commodityRow, self.tableLabels.index("Carrier Current"), qCarrierCurItem)
                 self.resourceTableList.setItem(commodityRow, self.tableLabels.index("Carrier Need"), qCarrierNeedItem)
+        transactionDict.clear()
 
     def updateTableDisplay(self):
         print("Selected menu option")
