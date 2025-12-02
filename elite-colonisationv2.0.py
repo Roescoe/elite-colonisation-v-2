@@ -632,11 +632,8 @@ class UI(QMainWindow):
 
     def formatResourceTable(self):
         print("Formatting table...")
-        self.resourceTableList.setStyleSheet("""
-            QHeaderView::section {
-                background-color: rgb(20, 28, 160);  /* Header background color */
-                color: snow;              /* Header text color */
-            }""")
+        self.resourceTableList.horizontalHeader().setStyleSheet("QHeaderView::section {color: snow; font-size: {self.allTextSize}px; font-weight: bold; background-color: rgb(20, 28, 160);}")
+        self.resourceTableList.horizontalHeader().setSectionResizeMode(QHeaderView.ResizeMode.ResizeToContents)
         for i in range(self.resourceTableList.rowCount()):
             self.resourceTableList.setRowHeight(i, self.allTextSize+15)
         self.resourceTableList.setFont(QFont('Calibri',self.allTextSize))
@@ -649,7 +646,6 @@ class UI(QMainWindow):
             self.resourceTableList.setColumnWidth(self.tableLabels.index("Carrier Need"), int(15 * self.allTextSize))
         self.resourceTableList.verticalHeader().setVisible(False)
         self.resourceTableList.setSortingEnabled(True)
-        # self.resourceTableList.horizontalHeader().setStyleSheet(f"color: snow; font-size: {self.allTextSize}px; font-weight: bold; background-color: rgb(20, 28, 160)")
 
         self.scrollArea.setWidget(self.resourceTableList)
 
