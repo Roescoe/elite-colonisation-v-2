@@ -480,6 +480,8 @@ class UI(QMainWindow):
                             self.resourceTableList.setRowHidden(row, True)
                         else:
                             self.resourceTableList.setRowHidden(row, False)
+                    else:
+                        self.resourceTableList.setRowHidden(row, False)
                 else:
                     self.resourceTableList.setRowHidden(row, False)
 
@@ -625,10 +627,6 @@ class UI(QMainWindow):
                     self.resourceTableList.item(i, needIndex).setBackground(QColor("#281E5D"))
                 self.resourceTableList.setItem(i, self.tableLabels.index("Trips Remaining"), qTripItems[i])
             self.resourceTableList.setHorizontalHeaderLabels(self.tableLabels)
-
-        # self.resourceTableList.horizontalHeader().setSectionResizeMode(QHeaderView.ResizeMode.Stretch)
-        # self.resourceTableList.verticalHeader().setSectionResizeMode(QHeaderView.ResizeMode.Stretch)
-        # self.resourceTableList.setSizeAdjustPolicy(QAbstractScrollArea.SizeAdjustPolicy.AdjustToContents)
 
     def formatResourceTable(self):
         print("Formatting table...")
