@@ -103,7 +103,7 @@ class UI(QMainWindow):
         self.getLogFileData()
         
         self.displayColony()
-        self.calculateTransactions()
+        # self.calculateTransactions()
 
         # loop = asyncio.new_event_loop()
         # asyncio.set_event_loop(loop)
@@ -124,9 +124,9 @@ class UI(QMainWindow):
         self.action12pt_2.triggered.connect(lambda:self.setTextSize(100))
         self.action16pt_2.triggered.connect(lambda:self.setTextSize(10))
         self.action24pt_2.triggered.connect(lambda:self.setTextSize(1))
-        self.actionHide_total_need.triggered.connect(lambda:self.updateTableDisplay())
-        self.actionHide_carrier_cargo.triggered.connect(lambda:self.updateTableDisplay())
-        self.actionHide_Finished_Resources.triggered.connect(lambda:self.updateTableDisplay())
+        self.actionHide_total_need.triggered.connect(lambda:self.formatResourceTable())
+        self.actionHide_carrier_cargo.triggered.connect(lambda:self.formatResourceTable())
+        self.actionHide_Finished_Resources.triggered.connect(lambda:self.formatResourceTable())
         self.stationList.activated.connect(lambda:self.updateTableData())
         self.shipList.currentIndexChanged.connect(lambda:self.displayColony())
         self.update.clicked.connect(lambda:self.updateTableData())
@@ -144,7 +144,7 @@ class UI(QMainWindow):
     def updateTableData(self):
         self.getLogFileData()
         self.displayColony()
-        self.calculateTransactions()
+        # self.calculateTransactions()
 
     def setLogfileLoadRange(self, loadTimeSelect, refreshList):
         
@@ -462,29 +462,6 @@ class UI(QMainWindow):
                 self.resourceTableList.setItem(commodityRow, self.tableLabels.index("Carrier Need"), qCarrierNeedItem)
         transactionDict.clear()
 
-    def updateTableDisplay(self):
-        print("Selected menu option")
-        if self.tableLabels:
-            if self.actionHide_total_need.isChecked():
-                self.resourceTableList.setColumnHidden(self.tableLabels.index("Total Need"), True)
-            else:
-                self.resourceTableList.setColumnHidden(self.tableLabels.index("Total Need"), False)
-            if self.actionHide_carrier_cargo.isChecked():
-                self.resourceTableList.setColumnHidden(self.tableLabels.index("Carrier Need"), True)
-            else:
-                self.resourceTableList.setColumnHidden(self.tableLabels.index("Carrier Need"), False)
-            for row in range(self.resourceTableList.rowCount()):
-                if self.actionHide_Finished_Resources.isChecked():
-                    if self.resourceTableList.item(row, self.tableLabels.index("Current Need")) is not None:
-                        if self.resourceTableList.item(row, self.tableLabels.index("Current Need")).text() == 'Done':
-                            self.resourceTableList.setRowHidden(row, True)
-                        else:
-                            self.resourceTableList.setRowHidden(row, False)
-                    else:
-                        self.resourceTableList.setRowHidden(row, False)
-                else:
-                    self.resourceTableList.setRowHidden(row, False)
-
     def displayColony(self):
         selectedMarketID = -1
 
@@ -509,7 +486,6 @@ class UI(QMainWindow):
         self.setupResourceTable()
         self.formatResourceTable()
         self.displayColonyStats()
-        self.updateTableDisplay()
         self.setFleetCarriers()
 
     def findMarketEntry(self, selectedMarketID, sourceFile):
@@ -646,6 +622,28 @@ class UI(QMainWindow):
         self.resourceTableList.setSortingEnabled(True)
 
         self.scrollArea.setWidget(self.resourceTableList)
+
+        if self.tableLabels:
+            # unhide all rows to update them properly
+            for column in range(self.resourceTableList.columnCount()):
+                self.resourceTableList.showColumn(column)
+            for row in range(self.resourceTableList.rowCount()):
+                self.resourceTableList.showRow(row)
+
+            print(f"Updating row/column display, rows: {self.resourceTableList.rowCount()}, columns: {self.resourceTableList.columnCount()}")
+            if self.actionHide_total_need.isChecked():
+                self.resourceTableList.setColumnHidden(self.tableLabels.index("Total Need"), True)
+            else:
+                self.resourceTableList.setColumnHidden(self.tableLabels.index("Total Need"), False)
+            if self.actionHide_carrier_cargo.isChecked():
+                self.resourceTableList.setColumnHidden(self.tableLabels.index("Carrier Need"), True)
+            else:
+                self.resourceTableList.setColumnHidden(self.tableLabels.index("Carrier Need"), False)
+            if self.actionHide_Finished_Resources.isChecked():
+                for row in range(self.resourceTableList.rowCount()):
+                    if self.resourceTableList.item(row, self.tableLabels.index("Current Need")) is not None:
+                        if self.resourceTableList.item(row, self.tableLabels.index("Current Need")).text() == 'Done':
+                            self.resourceTableList.setRowHidden(row, True)
 
     def displayColonyStats(self):
         tripsCalc = 0
