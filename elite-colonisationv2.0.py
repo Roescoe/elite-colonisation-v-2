@@ -458,7 +458,7 @@ class UI(QMainWindow):
                 qCarrierCurItem.setText(str(transactionDict[res]))
                 qCarrierNeedItem.setText(carrierNeed)
 
-                self.resourceTableList.setItem(commodityRow, self.tableLabels.index("Carrier Current"), qCarrierCurItem)
+                # self.resourceTableList.setItem(commodityRow, self.tableLabels.index("Carrier Current"), qCarrierCurItem)
                 self.resourceTableList.setItem(commodityRow, self.tableLabels.index("Carrier Need"), qCarrierNeedItem)
         transactionDict.clear()
 
@@ -510,11 +510,12 @@ class UI(QMainWindow):
         return foundEntry
 
     def setupResourceTable(self):
-        qTypeItems = []
-        qResourceItems = []
-        qAmountItems = []
-        qCurrentItems = []
-        qTripItems = []
+        # qTypeItems = []
+        # qResourceItems = []
+        # qAmountItems = []
+        # qCurrentItems = []
+        # qTripItems = []
+        ResourceTableRows = []
         qFleetCarrier = []
         cargo = 0
         doneState = -1
@@ -572,11 +573,13 @@ class UI(QMainWindow):
                 qAmountItem.setTextAlignment(Qt.AlignmentFlag.AlignRight)
                 qTripItem.setTextAlignment(Qt.AlignmentFlag.AlignRight)
 
-                qTypeItems.append(qTypeItem)
-                qResourceItems.append(qResourceItem)
-                qAmountItems.append(qAmountItem)
-                qCurrentItems.append([qCurrentItem, doneState])
-                qTripItems.append(qTripItem)
+                # qTypeItems.append(qTypeItem)
+                # qResourceItems.append(qResourceItem)
+                # qAmountItems.append(qAmountItem)
+                # qCurrentItems.append([qCurrentItem, doneState])
+                # qTripItems.append(qTripItem)
+                ResourceTableRow = (qTypeItem,qResourceItem,qAmountItem,[qCurrentItem, doneState],qTripItem)
+                ResourceTableRows.append(ResourceTableRow)
 
             self.tableLabels.append("Category")
             self.tableLabels.append("Resource")
@@ -584,24 +587,37 @@ class UI(QMainWindow):
             self.tableLabels.append("Current Need")
             self.tableLabels.append("Trips Remaining")
             self.tableLabels.append("Carrier Need")
-            self.tableLabels.append("Carrier Current")
+            # self.tableLabels.append("Carrier Current")
             self.resourceTableList.setRowCount(len(self.lastMarketEntry["ResourcesRequired"]))
             self.resourceTableList.setColumnCount(len(self.tableLabels))
             print(f"tableLabels: {self.tableLabels}")
 
-            for i, qResource in enumerate(qResourceItems):
-                self.resourceTableList.setItem(i, self.tableLabels.index("Category"), qTypeItems[i])
-                self.resourceTableList.setItem(i, self.tableLabels.index("Resource"), qResource)
-                self.resourceTableList.setItem(i, self.tableLabels.index("Total Need"), qAmountItems[i])
+            # for i, qResource in enumerate(qResourceItems):
+                # self.resourceTableList.setItem(i, self.tableLabels.index("Category"), qTypeItems[i])
+                # self.resourceTableList.setItem(i, self.tableLabels.index("Resource"), qResource)
+                # self.resourceTableList.setItem(i, self.tableLabels.index("Total Need"), qAmountItems[i])
+                # needIndex = self.tableLabels.index("Current Need")
+                # self.resourceTableList.setItem(i, needIndex, qCurrentItems[i][0])
+                # if qCurrentItems[i][1] == 1:
+                #     self.resourceTableList.item(i, needIndex).setBackground(QColor("green"))
+                # elif qCurrentItems[i][1] == -1:
+                #     self.resourceTableList.item(i, needIndex).setBackground(QColor("#c32148"))
+                # elif qCurrentItems[i][1] == 0:
+                #     self.resourceTableList.item(i, needIndex).setBackground(QColor("#281E5D"))
+                # self.resourceTableList.setItem(i, self.tableLabels.index("Trips Remaining"), qTripItems[i])
+            for i in range(len(ResourceTableRows)):
+                self.resourceTableList.setItem(i, self.tableLabels.index("Category"), ResourceTableRows[i][0])
+                self.resourceTableList.setItem(i, self.tableLabels.index("Resource"), ResourceTableRows[i][1])
+                self.resourceTableList.setItem(i, self.tableLabels.index("Total Need"), ResourceTableRows[i][2])
                 needIndex = self.tableLabels.index("Current Need")
-                self.resourceTableList.setItem(i, needIndex, qCurrentItems[i][0])
-                if qCurrentItems[i][1] == 1:
+                self.resourceTableList.setItem(i, needIndex, ResourceTableRows[i][3][0])
+                if ResourceTableRows[i][3][1] == 1:
                     self.resourceTableList.item(i, needIndex).setBackground(QColor("green"))
-                elif qCurrentItems[i][1] == -1:
+                elif ResourceTableRows[i][3][1] == -1:
                     self.resourceTableList.item(i, needIndex).setBackground(QColor("#c32148"))
-                elif qCurrentItems[i][1] == 0:
+                elif ResourceTableRows[i][3][1] == 0:
                     self.resourceTableList.item(i, needIndex).setBackground(QColor("#281E5D"))
-                self.resourceTableList.setItem(i, self.tableLabels.index("Trips Remaining"), qTripItems[i])
+                self.resourceTableList.setItem(i, self.tableLabels.index("Trips Remaining"), ResourceTableRows[i][4])
             self.resourceTableList.setHorizontalHeaderLabels(self.tableLabels)
 
     def formatResourceTable(self):
