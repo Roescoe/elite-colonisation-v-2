@@ -390,7 +390,7 @@ class UI(QMainWindow):
             self.carrierSelect.clear()
             # self.stationList.sort(key=lambda station:station[2], reverse=True)
             for station in self.uniqueStations:
-                print(f"is station: {station} a fleet Carrier?? {station[3] == 'fleet'}")
+                # print(f"is station: {station} a fleet Carrier?? {station[3] == 'fleet'}")
 
                 if station[3] == "fleet":
                     items = [self.carrierSelect.itemText(i) for i in range(self.carrierSelect.count())]
@@ -643,6 +643,7 @@ class UI(QMainWindow):
                 for row in range(self.resourceTableList.rowCount()):
                     if self.resourceTableList.item(row, self.tableLabels.index("Current Need")) is not None:
                         if self.resourceTableList.item(row, self.tableLabels.index("Current Need")).text() == 'Done':
+                            print(f"The item being hidden: {self.resourceTableList.item(row, self.tableLabels.index('Resource')).text()}")
                             self.resourceTableList.setRowHidden(row, True)
 
     def displayColonyStats(self):
