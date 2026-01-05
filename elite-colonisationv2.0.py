@@ -605,6 +605,8 @@ class UI(QMainWindow):
             self.resourceTableList.setHorizontalHeaderLabels(self.tableLabels)
 
     def formatResourceTable(self):
+        hiddenRows = []
+
         print("Formatting table...")
         self.resourceTableList.horizontalHeader().setStyleSheet("QHeaderView::section {color: snow; font-size: {self.allTextSize}px; font-weight: bold; background-color: rgb(20, 28, 160);}")
         self.resourceTableList.horizontalHeader().setSectionResizeMode(QHeaderView.ResizeMode.ResizeToContents)
@@ -644,7 +646,11 @@ class UI(QMainWindow):
                     if self.resourceTableList.item(row, self.tableLabels.index("Current Need")) is not None:
                         if self.resourceTableList.item(row, self.tableLabels.index("Current Need")).text() == 'Done':
                             print(f"The item being hidden: {self.resourceTableList.item(row, self.tableLabels.index('Resource')).text()}")
-                            self.resourceTableList.setRowHidden(row, True)
+                            hiddenRows.append(self.resourceTableList.item(row, self.tableLabels.index('Resource')).text())
+            print(f"Rows to hide: {hiddenRows}")
+            for printRow in range(self.resourceTableList.rowCount()):
+                if self.resourceTableList.item(printRow, self.tableLabels.index('Resource')).text() in hiddenRows:
+                    self.resourceTableList.setRowHidden(printRow, True)
 
     def displayColonyStats(self):
         tripsCalc = 0
