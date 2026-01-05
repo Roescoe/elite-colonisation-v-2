@@ -74,7 +74,7 @@ class UI(QMainWindow):
     def __init__(self, *args, **kwargs):
         super(UI, self).__init__()
         #properties
-        self.subVersion =".2"
+        self.subVersion =".3"
         self.olderThanNumDays = 0
         self.allTextSize = 12
         self.logfiles = []
@@ -632,19 +632,19 @@ class UI(QMainWindow):
                         if self.resourceTableList.item(printRow, self.tableLabels.index('Resource')).text() in hiddenRows:
                             self.resourceTableList.setRowHidden(printRow, True)
             # resize table
-            self.resourceTableList.horizontalHeader().setStyleSheet("QHeaderView::section {color: snow; font-size: {self.allTextSize}px; font-weight: bold; background-color: rgb(20, 28, 160);}")
-            self.resourceTableList.horizontalHeader().setSectionResizeMode(QHeaderView.ResizeMode.ResizeToContents)
+            # self.resourceTableList.horizontalHeader().setStyleSheet("QHeaderView::section {color: snow; font-size: {self.allTextSize}px; font-weight: bold; background-color: rgb(20, 28, 160);}")
+            # self.resourceTableList.horizontalHeader().setSectionResizeMode(QHeaderView.ResizeMode.ResizeToContents)
 
-            # for i in range(self.resourceTableList.rowCount()):
-            #     self.resourceTableList.setRowHeight(i, self.allTextSize+15)
-            # if len(self.tableLabels) > 0:
-            #     self.resourceTableList.setColumnWidth(self.tableLabels.index("Category"), int(13 * self.allTextSize))
-            #     self.resourceTableList.setColumnWidth(self.tableLabels.index("Resource"), int(18 * self.allTextSize))
-            #     self.resourceTableList.setColumnWidth(self.tableLabels.index("Total Need"), int(7 * self.allTextSize))
-            #     self.resourceTableList.setColumnWidth(self.tableLabels.index("Current Need"), int(8 * self.allTextSize))
-            #     self.resourceTableList.setColumnWidth(self.tableLabels.index("Trips Remaining"), int(9 * self.allTextSize))
-            #     self.resourceTableList.setColumnWidth(self.tableLabels.index("Carrier Need"), int(15 * self.allTextSize))
-            # self.resourceTableList.setFont(QFont('Calibri',self.allTextSize))
+            for i in range(self.resourceTableList.rowCount()):
+                self.resourceTableList.setRowHeight(i, self.allTextSize+15)
+            if len(self.tableLabels) > 0:
+                self.resourceTableList.setColumnWidth(self.tableLabels.index("Category"), int(13 * self.allTextSize))
+                self.resourceTableList.setColumnWidth(self.tableLabels.index("Resource"), int(18 * self.allTextSize))
+                self.resourceTableList.setColumnWidth(self.tableLabels.index("Total Need"), int(7 * self.allTextSize))
+                self.resourceTableList.setColumnWidth(self.tableLabels.index("Current Need"), int(8 * self.allTextSize))
+                self.resourceTableList.setColumnWidth(self.tableLabels.index("Trips Remaining"), int(9 * self.allTextSize))
+                self.resourceTableList.setColumnWidth(self.tableLabels.index("Carrier Need"), int(15 * self.allTextSize))
+            self.resourceTableList.setFont(QFont('Calibri',self.allTextSize))
 
             self.resourceTableList.setSortingEnabled(True)
             self.resourceTableList.verticalHeader().setVisible(False)
