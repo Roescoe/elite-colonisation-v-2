@@ -74,7 +74,7 @@ class UI(QMainWindow):
     def __init__(self, *args, **kwargs):
         super(UI, self).__init__()
         #properties
-        self.subVersion =".1"
+        self.subVersion =".2"
         self.olderThanNumDays = 0
         self.allTextSize = 12
         self.logfiles = []
@@ -105,12 +105,6 @@ class UI(QMainWindow):
         
         self.displayColony()
         # self.calculateTransactions()
-
-        # loop = asyncio.new_event_loop()
-        # asyncio.set_event_loop(loop)
-        # loop.create_task(self.monitor_directory())
-        # loop.run_forever()
-
 
 
         #buttons
@@ -512,11 +506,6 @@ class UI(QMainWindow):
         return foundEntry
 
     def setupResourceTable(self):
-        # qTypeItems = []
-        # qResourceItems = []
-        # qAmountItems = []
-        # qCurrentItems = []
-        # qTripItems = []
         ResourceTableRows = []
         qFleetCarrier = []
         cargo = 0
@@ -576,11 +565,6 @@ class UI(QMainWindow):
                 qAmountItem.setTextAlignment(Qt.AlignmentFlag.AlignRight)
                 qTripItem.setTextAlignment(Qt.AlignmentFlag.AlignRight)
 
-                # qTypeItems.append(qTypeItem)
-                # qResourceItems.append(qResourceItem)
-                # qAmountItems.append(qAmountItem)
-                # qCurrentItems.append([qCurrentItem, doneState])
-                # qTripItems.append(qTripItem)
                 ResourceTableRow = (qTypeItem,qResourceItem,qAmountItem,[qCurrentItem, doneState],qTripItem)
                 print(f"The row tuple to print: {qTypeItem.text()},{qResourceItem.text()},{qAmountItem.text()},{qCurrentItem.text()}, {doneState}],{qTripItem.text()}")
                 ResourceTableRows.append(ResourceTableRow)
@@ -595,20 +579,8 @@ class UI(QMainWindow):
             self.resourceTableList.setRowCount(len(self.lastMarketEntry["ResourcesRequired"]))
             self.resourceTableList.setColumnCount(len(self.tableLabels))
             print(f"tableLabels: {self.tableLabels}")
+            self.resourceTableList.setHorizontalHeaderLabels(self.tableLabels)
 
-            # for i, qResource in enumerate(qResourceItems):
-                # self.resourceTableList.setItem(i, self.tableLabels.index("Category"), qTypeItems[i])
-                # self.resourceTableList.setItem(i, self.tableLabels.index("Resource"), qResource)
-                # self.resourceTableList.setItem(i, self.tableLabels.index("Total Need"), qAmountItems[i])
-                # needIndex = self.tableLabels.index("Current Need")
-                # self.resourceTableList.setItem(i, needIndex, qCurrentItems[i][0])
-                # if qCurrentItems[i][1] == 1:
-                #     self.resourceTableList.item(i, needIndex).setBackground(QColor("green"))
-                # elif qCurrentItems[i][1] == -1:
-                #     self.resourceTableList.item(i, needIndex).setBackground(QColor("#c32148"))
-                # elif qCurrentItems[i][1] == 0:
-                #     self.resourceTableList.item(i, needIndex).setBackground(QColor("#281E5D"))
-                # self.resourceTableList.setItem(i, self.tableLabels.index("Trips Remaining"), qTripItems[i])
             for i in range(len(ResourceTableRows)):
                 self.resourceTableList.setItem(i, self.tableLabels.index("Category"), ResourceTableRows[i][0])
                 self.resourceTableList.setItem(i, self.tableLabels.index("Resource"), ResourceTableRows[i][1])
@@ -622,7 +594,9 @@ class UI(QMainWindow):
                 elif ResourceTableRows[i][3][1] == 0:
                     self.resourceTableList.item(i, needIndex).setBackground(QColor("#281E5D"))
                 self.resourceTableList.setItem(i, self.tableLabels.index("Trips Remaining"), ResourceTableRows[i][4])
-            self.resourceTableList.setHorizontalHeaderLabels(self.tableLabels)
+                for k in range(self.resourceTableList.columnCount()):
+                    if self.resourceTableList.item(i, k) is not None:
+                        print(f"Colored: {self.resourceTableList.item(i, k).text()}")
 
     def formatResourceTable(self):
         hiddenRows = []
