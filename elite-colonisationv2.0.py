@@ -524,6 +524,7 @@ class UI(QMainWindow):
             cargo = int(self.cargoSpace.text())
         self.resourceTableList.clear()
         self.tableLabels.clear()
+        ResourceTableRows.clear()
 
         print("Latest Entry:", self.lastMarketEntry)
         if "ResourcesRequired" in self.lastMarketEntry:
@@ -579,6 +580,7 @@ class UI(QMainWindow):
                 # qCurrentItems.append([qCurrentItem, doneState])
                 # qTripItems.append(qTripItem)
                 ResourceTableRow = (qTypeItem,qResourceItem,qAmountItem,[qCurrentItem, doneState],qTripItem)
+                print(f"The row tuple to print: {qTypeItem.text()},{qResourceItem.text()},{qAmountItem.text()},{qCurrentItem.text()}, {doneState}],{qTripItem.text()}")
                 ResourceTableRows.append(ResourceTableRow)
 
             self.tableLabels.append("Category")
@@ -625,22 +627,6 @@ class UI(QMainWindow):
         hiddenRows.clear()
 
         print("Formatting table...")
-        self.resourceTableList.horizontalHeader().setStyleSheet("QHeaderView::section {color: snow; font-size: {self.allTextSize}px; font-weight: bold; background-color: rgb(20, 28, 160);}")
-        self.resourceTableList.horizontalHeader().setSectionResizeMode(QHeaderView.ResizeMode.ResizeToContents)
-        for i in range(self.resourceTableList.rowCount()):
-            self.resourceTableList.setRowHeight(i, self.allTextSize+15)
-        self.resourceTableList.setFont(QFont('Calibri',self.allTextSize))
-        if len(self.tableLabels) > 0:
-            self.resourceTableList.setColumnWidth(self.tableLabels.index("Category"), int(13 * self.allTextSize))
-            self.resourceTableList.setColumnWidth(self.tableLabels.index("Resource"), int(18 * self.allTextSize))
-            self.resourceTableList.setColumnWidth(self.tableLabels.index("Total Need"), int(7 * self.allTextSize))
-            self.resourceTableList.setColumnWidth(self.tableLabels.index("Current Need"), int(8 * self.allTextSize))
-            self.resourceTableList.setColumnWidth(self.tableLabels.index("Trips Remaining"), int(9 * self.allTextSize))
-            self.resourceTableList.setColumnWidth(self.tableLabels.index("Carrier Need"), int(15 * self.allTextSize))
-        self.resourceTableList.verticalHeader().setVisible(False)
-        self.resourceTableList.setSortingEnabled(True)
-
-        self.scrollArea.setWidget(self.resourceTableList)
 
         if self.tableLabels:
             # unhide all rows to update them properly
@@ -669,6 +655,24 @@ class UI(QMainWindow):
                     if self.resourceTableList.item(printRow, self.tableLabels.index("Resource")) is not None:
                         if self.resourceTableList.item(printRow, self.tableLabels.index('Resource')).text() in hiddenRows:
                             self.resourceTableList.setRowHidden(printRow, True)
+            # resize table
+            self.resourceTableList.horizontalHeader().setStyleSheet("QHeaderView::section {color: snow; font-size: {self.allTextSize}px; font-weight: bold; background-color: rgb(20, 28, 160);}")
+            self.resourceTableList.horizontalHeader().setSectionResizeMode(QHeaderView.ResizeMode.ResizeToContents)
+
+            for i in range(self.resourceTableList.rowCount()):
+                self.resourceTableList.setRowHeight(i, self.allTextSize+15)
+            if len(self.tableLabels) > 0:
+                self.resourceTableList.setColumnWidth(self.tableLabels.index("Category"), int(13 * self.allTextSize))
+                self.resourceTableList.setColumnWidth(self.tableLabels.index("Resource"), int(18 * self.allTextSize))
+                self.resourceTableList.setColumnWidth(self.tableLabels.index("Total Need"), int(7 * self.allTextSize))
+                self.resourceTableList.setColumnWidth(self.tableLabels.index("Current Need"), int(8 * self.allTextSize))
+                self.resourceTableList.setColumnWidth(self.tableLabels.index("Trips Remaining"), int(9 * self.allTextSize))
+                self.resourceTableList.setColumnWidth(self.tableLabels.index("Carrier Need"), int(15 * self.allTextSize))
+            # self.resourceTableList.setFont(QFont('Calibri',self.allTextSize))
+
+            self.resourceTableList.setSortingEnabled(True)
+            self.resourceTableList.verticalHeader().setVisible(False)
+            self.scrollArea.setWidget(self.resourceTableList)
 
     def displayColonyStats(self):
         tripsCalc = 0
