@@ -74,7 +74,7 @@ class UI(QMainWindow):
     def __init__(self, *args, **kwargs):
         super(UI, self).__init__()
         #properties
-        self.subVersion =".3"
+        self.subVersion =".4"
         self.olderThanNumDays = 0
         self.allTextSize = 12
         self.logfiles = []
@@ -90,6 +90,7 @@ class UI(QMainWindow):
         self.tableLabels = []
         self.ships = []
         self.transactions = []
+        self.previousStationIndex = -2
 
         #initialize windows
         uic.loadUi('elite-colonisationv2.0.ui', self)
@@ -353,6 +354,7 @@ class UI(QMainWindow):
         if self.uniqueStations:
             self.uniqueStations.sort(key=lambda station:station[2], reverse=True)
             savedIndex = self.stationList.currentIndex()
+            self.previousStationIndex = savedIndex
             self.stationList.clear()
             for station in self.uniqueStations:
                 if self.eliteFileTime < station[2]:
@@ -506,19 +508,34 @@ class UI(QMainWindow):
         return foundEntry
 
     def setupResourceTable(self):
-        ResourceTableRows = []
-        qFleetCarrier = []
+        resourceTableRows = {}
+        resourceOrder = []
+        activeResources = []
         cargo = 0
         doneState = -1
 
         if len(self.shipList) > 0:
             cargo = int(self.cargoSpace.text())
-        self.resourceTableList.clear()
+        # self.resourceTableList.clear()
         self.tableLabels.clear()
-        ResourceTableRows.clear()
+        resourceTableRows.clear()
+
+        if self.resourceTableList.item(0,1) and int(self.stationList.currentIndex()) == int(self.previousStationIndex):
+            print("**There's resources in the table already**")
+            for resource in range(self.resourceTableList.rowCount()):
+                if self.resourceTableList.item(resource,1) is not None:
+                    resourceOrder.append(self.resourceTableList.item(resource,1).text())
+        else:
+            print("**First time generating table, and/or it's empty**")
+        print(f"Resource Order {resourceOrder}")
 
         print("Latest Entry:", self.lastMarketEntry)
         if "ResourcesRequired" in self.lastMarketEntry:
+            #remove resources from order if they aren't in the current entry
+            for i in range(len(self.lastMarketEntry["ResourcesRequired"])):
+                activeResources = self.lastMarketEntry["ResourcesRequired"][i]["Name_Localised"]
+            resourceOrder = list(filter(lambda name: name in resourceOrder, activeResources))
+
             print(f'Num resources listed: {len(self.lastMarketEntry["ResourcesRequired"])}')
             for i in range(len(self.lastMarketEntry["ResourcesRequired"])):
                 
@@ -565,9 +582,8 @@ class UI(QMainWindow):
                 qAmountItem.setTextAlignment(Qt.AlignmentFlag.AlignRight)
                 qTripItem.setTextAlignment(Qt.AlignmentFlag.AlignRight)
 
-                ResourceTableRow = (qTypeItem,qResourceItem,qAmountItem,[qCurrentItem, doneState],qTripItem)
-                print(f"The row tuple to print: {qTypeItem.text()},{qResourceItem.text()},{qAmountItem.text()},{qCurrentItem.text()}, {doneState}],{qTripItem.text()}")
-                ResourceTableRows.append(ResourceTableRow)
+                resourceTableRows[qResourceItem.text()] = (qTypeItem,qResourceItem,qAmountItem,[qCurrentItem, doneState],qTripItem)
+                print(f"The row tuple to print: {qTypeItem.text()}, {qResourceItem.text()}, {qAmountItem.text()}, [{qCurrentItem.text()}, {doneState}], {qTripItem.text()}")
 
             self.tableLabels.append("Category")
             self.tableLabels.append("Resource")
@@ -581,22 +597,28 @@ class UI(QMainWindow):
             print(f"tableLabels: {self.tableLabels}")
             self.resourceTableList.setHorizontalHeaderLabels(self.tableLabels)
 
-            for i in range(len(ResourceTableRows)):
-                self.resourceTableList.setItem(i, self.tableLabels.index("Category"), ResourceTableRows[i][0])
-                self.resourceTableList.setItem(i, self.tableLabels.index("Resource"), ResourceTableRows[i][1])
-                self.resourceTableList.setItem(i, self.tableLabels.index("Total Need"), ResourceTableRows[i][2])
+            if len(resourceOrder) > 0:
+                # Sort the list of tuples based on the resourceOrder
+                orderedResourceTableRows = [resourceTableRows[key] for key in resourceOrder if key in resourceTableRows]
+            else:
+                orderedResourceTableRows = list(resourceTableRows.values())
+
+            for i in range(len(orderedResourceTableRows)):
+                self.resourceTableList.setItem(i, self.tableLabels.index("Category"), orderedResourceTableRows[i][0])
+                self.resourceTableList.setItem(i, self.tableLabels.index("Resource"), orderedResourceTableRows[i][1])
+                self.resourceTableList.setItem(i, self.tableLabels.index("Total Need"), orderedResourceTableRows[i][2])
                 needIndex = self.tableLabels.index("Current Need")
-                self.resourceTableList.setItem(i, needIndex, ResourceTableRows[i][3][0])
-                if ResourceTableRows[i][3][1] == 1:
+                self.resourceTableList.setItem(i, needIndex, orderedResourceTableRows[i][3][0])
+                if orderedResourceTableRows[i][3][1] == 1:
                     self.resourceTableList.item(i, needIndex).setBackground(QColor("green"))
-                elif ResourceTableRows[i][3][1] == -1:
+                elif orderedResourceTableRows[i][3][1] == -1:
                     self.resourceTableList.item(i, needIndex).setBackground(QColor("#c32148"))
-                elif ResourceTableRows[i][3][1] == 0:
+                elif orderedResourceTableRows[i][3][1] == 0:
                     self.resourceTableList.item(i, needIndex).setBackground(QColor("#281E5D"))
-                self.resourceTableList.setItem(i, self.tableLabels.index("Trips Remaining"), ResourceTableRows[i][4])
-                for k in range(self.resourceTableList.columnCount()):
-                    if self.resourceTableList.item(i, k) is not None:
-                        print(f"Colored: {self.resourceTableList.item(i, k).text()}")
+                self.resourceTableList.setItem(i, self.tableLabels.index("Trips Remaining"), orderedResourceTableRows[i][4])
+                # for k in range(self.resourceTableList.columnCount()):
+                #     if self.resourceTableList.item(i, k) is not None:
+                #         print(f"Colored: {self.resourceTableList.item(i, k).text()}")
 
     def formatResourceTable(self):
         hiddenRows = []
@@ -632,8 +654,8 @@ class UI(QMainWindow):
                         if self.resourceTableList.item(printRow, self.tableLabels.index('Resource')).text() in hiddenRows:
                             self.resourceTableList.setRowHidden(printRow, True)
             # resize table
-            # self.resourceTableList.horizontalHeader().setStyleSheet("QHeaderView::section {color: snow; font-size: {self.allTextSize}px; font-weight: bold; background-color: rgb(20, 28, 160);}")
-            # self.resourceTableList.horizontalHeader().setSectionResizeMode(QHeaderView.ResizeMode.ResizeToContents)
+            self.resourceTableList.horizontalHeader().setStyleSheet("QHeaderView::section {color: snow; font-size: {self.allTextSize}px; font-weight: bold; background-color: rgb(20, 28, 160);}")
+            self.resourceTableList.horizontalHeader().setSectionResizeMode(QHeaderView.ResizeMode.ResizeToContents)
 
             for i in range(self.resourceTableList.rowCount()):
                 self.resourceTableList.setRowHeight(i, self.allTextSize+15)
