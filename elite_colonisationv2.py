@@ -13,6 +13,8 @@ import time
 import pickle
 from datetime import datetime, timezone, timedelta
 import glob
+from createTable import createTable
+from collections import OrderedDict
 
 # This is a tool to print out Elite Dangerous colonisation data pulled from the user's logfiles
 # Copyright (C) 2025 Roescoe
@@ -36,7 +38,7 @@ class LogFileDialogClass(QDialog):
         super(LogFileDialogClass, self).__init__()
         self.directory = ''
         print("loading file dialog")
-        uic.loadUi('logfile-select.ui', self)
+        uic.loadUi('logfile_select.ui', self)
 
         self.getFileSettings()
         self.OpenFile.clicked.connect(lambda:self.openFileSystem())
@@ -85,7 +87,8 @@ class UI(QMainWindow):
         self.lastFileName = ''
         self.resourceTypeDict = {}
         self.resourceTableList = QTableWidget()
-        self.lastMarketEntry = {}
+        self.resourceTableRowsList = {}
+        self.marketEntries = {}
         self.fleetCarrierMarket = []
         self.tableLabels = []
         self.ships = []
@@ -93,7 +96,7 @@ class UI(QMainWindow):
         self.previousStationIndex = -2
 
         #initialize windows
-        uic.loadUi('elite-colonisationv2.0.ui', self)
+        uic.loadUi('elite_colonisationv2.ui', self)
         self.setWindowIcon(QtGui.QIcon('ColoniseLogo.png'))
         app.setWindowIcon(QtGui.QIcon('ColoniseLogo.png'))
         self.show()
@@ -127,6 +130,7 @@ class UI(QMainWindow):
         self.shipList.currentIndexChanged.connect(lambda:self.displayColony())
         self.update.clicked.connect(lambda:self.updateTableData())
         self.actionload_stats.triggered.connect(lambda:self.getScsStats())
+        self.resourceTableList.horizontalHeader().sectionClicked.connect(self.sortedColumnFunction)
 
         self.actionQuit.triggered.connect(lambda:self.saveAndQuit())
 
@@ -484,11 +488,11 @@ class UI(QMainWindow):
         self.setupResourceTable()
         self.formatResourceTable()
         self.displayColonyStats()
-        self.setFleetCarriers()
+        # self.setFleetCarriers()
 
     def findMarketEntry(self, selectedMarketID, sourceFile):
         foundEntry = False
-        self.lastMarketEntry.clear()
+        self.marketEntries.clear()
         if os.path.exists(sourceFile):
             with open(sourceFile,"r", encoding='iso-8859-1') as f:
                 for line in f:
@@ -496,94 +500,46 @@ class UI(QMainWindow):
                     # for station in self.uniqueStations:
                     if "MarketID" in dictLine:
                         # print("Reading from station: ", type(dictLine["MarketID"]))
-                        if dictLine["MarketID"] == selectedMarketID:
-                            if self.lastMarketEntry:
-                                if dictLine["timestamp"] > self.lastMarketEntry["timestamp"]:
-                                    self.lastMarketEntry = dictLine
-                                    foundEntry = True
-                            else:
-                                self.lastMarketEntry = dictLine
-                                foundEntry = True
-        print(f"The entry we're using: {self.lastMarketEntry} was updated? {foundEntry}")
+                        self.marketEntries[dictLine["MarketID"]] = dictLine
+                        foundEntry = True
+        # print(f"The entries: {self.marketEntries} were updated? {foundEntry}")
         return foundEntry
 
     def setupResourceTable(self):
-        resourceTableRows = {}
         resourceOrder = []
         activeResources = []
         cargo = 0
         doneState = -1
+        currentMarket = int(self.stationList.currentText().split("(",1)[1].split(")",1)[0])
+
+        # Clean out table        
+        self.resourceTableList.setRowCount(0)
+        self.resourceTableList.setHorizontalHeaderLabels([])
+        self.resourceTableList.setVerticalHeaderLabels([])
+        self.tableLabels.clear()
 
         if len(self.shipList) > 0:
             cargo = int(self.cargoSpace.text())
-        # self.resourceTableList.clear()
-        self.tableLabels.clear()
-        resourceTableRows.clear()
+        
+        print("Ships?:", self.shipList)
+        print("cargo?:", cargo)
+        # print("First Entry:", self.marketEntries[0])
 
-        if self.resourceTableList.item(0,1) and int(self.stationList.currentIndex()) == int(self.previousStationIndex):
-            print("**There's resources in the table already**")
-            for resource in range(self.resourceTableList.rowCount()):
-                if self.resourceTableList.item(resource,1) is not None:
-                    resourceOrder.append(self.resourceTableList.item(resource,1).text())
-        else:
-            print("**First time generating table, and/or it's empty**")
-        print(f"Resource Order {resourceOrder}")
+        for entry in self.marketEntries:
+            print(f"entry {entry}")
+            if "ResourcesRequired" in self.marketEntries[entry]:
+                print(f"Reading market: {self.marketEntries[entry]['MarketID']}")
+                resourceTable = createTable(self.marketEntries[entry], cargo)
+                resourceTableRows = resourceTable.getRows()
+                self.resourceTableRowsList[self.marketEntries[entry]["MarketID"]] = resourceTableRows
 
-        print("Latest Entry:", self.lastMarketEntry)
-        if "ResourcesRequired" in self.lastMarketEntry:
-            #remove resources from order if they aren't in the current entry
-            for i in range(len(self.lastMarketEntry["ResourcesRequired"])):
-                activeResources = self.lastMarketEntry["ResourcesRequired"][i]["Name_Localised"]
-            resourceOrder = list(filter(lambda name: name in resourceOrder, activeResources))
+        print(f"self.resourceTableRowsList current table: {self.resourceTableRowsList[currentMarket]}")
 
-            print(f'Num resources listed: {len(self.lastMarketEntry["ResourcesRequired"])}')
-            for i in range(len(self.lastMarketEntry["ResourcesRequired"])):
-                
-                total_need = self.lastMarketEntry["ResourcesRequired"][i]["RequiredAmount"]
-                current_provided = self.lastMarketEntry["ResourcesRequired"][i]["ProvidedAmount"]
-                current_need = int(total_need) - int(current_provided)
-                if cargo == 0:
-                    trips_remaining = 0
-                else:
-                    trips_remaining = round(current_need/cargo, 1)
+        if currentMarket in self.resourceTableRowsList:
+            currentTable = self.resourceTableRowsList[currentMarket]
 
-                qTypeItem = QTableWidgetItem()
-                qResourceItem = QTableWidgetItem()
-                qAmountItem = QTableWidgetItem()
-                qCurrentItem = QTableWidgetItem()
-                qTripItem = QTableWidgetItem()
-                
-
-                qTypeItem.setText(str(self.resourceTypeDict[self.lastMarketEntry["ResourcesRequired"][i]["Name_Localised"]]))
-                qResourceItem.setText(str(self.lastMarketEntry["ResourcesRequired"][i]["Name_Localised"]))
-                qAmountItem.setText(f"{total_need:,}".rjust(7))
-                qTripItem.setText(str(trips_remaining).rjust(7))
-
-                print(f"The need: {int(current_need)} The total: {int(total_need)}")
-                if int(current_need) == 0:
-                    doneState = 1
-                    qCurrentItem.setText("Done")
-                    qCurrentItem.setTextAlignment(Qt.AlignmentFlag.AlignCenter)
-                elif(int(current_need) == int(total_need)):
-                    doneState = -1
-                    qCurrentItem.setText(f"{current_need:,}".rjust(7))
-                    qCurrentItem.setTextAlignment(Qt.AlignmentFlag.AlignRight)
-                else:
-                    doneState = 0
-                    qCurrentItem.setText(f"{current_need:,}".rjust(7))
-                    qCurrentItem.setTextAlignment(Qt.AlignmentFlag.AlignRight)
-
-                qTypeItem.setFlags(Qt.ItemFlag.ItemIsSelectable | Qt.ItemFlag.ItemIsEnabled)
-                qResourceItem.setFlags(Qt.ItemFlag.ItemIsSelectable | Qt.ItemFlag.ItemIsEnabled)
-                qAmountItem.setFlags(Qt.ItemFlag.ItemIsSelectable | Qt.ItemFlag.ItemIsEnabled)
-                qCurrentItem.setFlags(Qt.ItemFlag.ItemIsSelectable | Qt.ItemFlag.ItemIsEnabled)
-                qTripItem.setFlags(Qt.ItemFlag.ItemIsSelectable | Qt.ItemFlag.ItemIsEnabled)
-
-                qAmountItem.setTextAlignment(Qt.AlignmentFlag.AlignRight)
-                qTripItem.setTextAlignment(Qt.AlignmentFlag.AlignRight)
-
-                resourceTableRows[qResourceItem.text()] = (qTypeItem,qResourceItem,qAmountItem,[qCurrentItem, doneState],qTripItem)
-                print(f"The row tuple to print: {qTypeItem.text()}, {qResourceItem.text()}, {qAmountItem.text()}, [{qCurrentItem.text()}, {doneState}], {qTripItem.text()}")
+        if self.resourceTableRowsList and currentTable:
+            print(f'The rows object: {resourceTableRows}')
 
             self.tableLabels.append("Category")
             self.tableLabels.append("Resource")
@@ -592,33 +548,25 @@ class UI(QMainWindow):
             self.tableLabels.append("Trips Remaining")
             self.tableLabels.append("Carrier Need")
             # self.tableLabels.append("Carrier Current")
-            self.resourceTableList.setRowCount(len(self.lastMarketEntry["ResourcesRequired"]))
+            self.resourceTableList.setRowCount(len(currentTable))
             self.resourceTableList.setColumnCount(len(self.tableLabels))
             print(f"tableLabels: {self.tableLabels}")
             self.resourceTableList.setHorizontalHeaderLabels(self.tableLabels)
 
-            if len(resourceOrder) > 0:
-                # Sort the list of tuples based on the resourceOrder
-                orderedResourceTableRows = [resourceTableRows[key] for key in resourceOrder if key in resourceTableRows]
-            else:
-                orderedResourceTableRows = list(resourceTableRows.values())
-
-            for i in range(len(orderedResourceTableRows)):
-                self.resourceTableList.setItem(i, self.tableLabels.index("Category"), orderedResourceTableRows[i][0])
-                self.resourceTableList.setItem(i, self.tableLabels.index("Resource"), orderedResourceTableRows[i][1])
-                self.resourceTableList.setItem(i, self.tableLabels.index("Total Need"), orderedResourceTableRows[i][2])
+            for i,row in enumerate(currentTable):
+                print(f"The row here: {i} and {row}")
+                self.resourceTableList.setItem(i, self.tableLabels.index("Category"), currentTable[row][0])
+                self.resourceTableList.setItem(i, self.tableLabels.index("Resource"), currentTable[row][1])
+                self.resourceTableList.setItem(i, self.tableLabels.index("Total Need"), currentTable[row][2])
                 needIndex = self.tableLabels.index("Current Need")
-                self.resourceTableList.setItem(i, needIndex, orderedResourceTableRows[i][3][0])
-                if orderedResourceTableRows[i][3][1] == 1:
+                self.resourceTableList.setItem(i, needIndex, currentTable[row][3][0])
+                if currentTable[row][3][1] == 1:
                     self.resourceTableList.item(i, needIndex).setBackground(QColor("green"))
-                elif orderedResourceTableRows[i][3][1] == -1:
+                elif currentTable[row][3][1] == -1:
                     self.resourceTableList.item(i, needIndex).setBackground(QColor("#c32148"))
-                elif orderedResourceTableRows[i][3][1] == 0:
+                elif currentTable[row][3][1] == 0:
                     self.resourceTableList.item(i, needIndex).setBackground(QColor("#281E5D"))
-                self.resourceTableList.setItem(i, self.tableLabels.index("Trips Remaining"), orderedResourceTableRows[i][4])
-                # for k in range(self.resourceTableList.columnCount()):
-                #     if self.resourceTableList.item(i, k) is not None:
-                #         print(f"Colored: {self.resourceTableList.item(i, k).text()}")
+                self.resourceTableList.setItem(i, self.tableLabels.index("Trips Remaining"), currentTable[row][4])
 
     def formatResourceTable(self):
         hiddenRows = []
@@ -648,11 +596,8 @@ class UI(QMainWindow):
                         if self.resourceTableList.item(row, self.tableLabels.index("Current Need")).text() == 'Done':
                             print(f"The item being hidden: {self.resourceTableList.item(row, self.tableLabels.index('Resource')).text()}")
                             hiddenRows.append(self.resourceTableList.item(row, self.tableLabels.index('Resource')).text())
+                            self.resourceTableList.setRowHidden(row, True)
                 print(f"Rows to hide: {hiddenRows}")
-                for printRow in range(self.resourceTableList.rowCount()):
-                    if self.resourceTableList.item(printRow, self.tableLabels.index("Resource")) is not None:
-                        if self.resourceTableList.item(printRow, self.tableLabels.index('Resource')).text() in hiddenRows:
-                            self.resourceTableList.setRowHidden(printRow, True)
             # resize table
             self.resourceTableList.horizontalHeader().setStyleSheet("QHeaderView::section {color: snow; font-size: {self.allTextSize}px; font-weight: bold; background-color: rgb(20, 28, 160);}")
             self.resourceTableList.horizontalHeader().setSectionResizeMode(QHeaderView.ResizeMode.ResizeToContents)
@@ -759,6 +704,14 @@ class UI(QMainWindow):
         formatted_time.strftime("%Y-%m-%dT%H:%M:%SZ")
         print("Time now: ", formatted_time)
         self.eliteFileTime = str(formatted_time)
+
+    def sortedColumnFunction(self, index):
+        print(f"You just sorted column {index} called: {self.resourceTableList.horizontalHeaderItem(index).text()}")
+        currentMarket = int(self.stationList.currentText().split("(",1)[1].split(")",1)[0])
+        resortedRowList = self.resourceTableRowsList[currentMarket]
+        print(f"The list being sorted: {resortedRowList.items()}")
+        # resortedRowList = OrderedDict(sorted(resortedRowList.items(), key=lambda item: item[index].text()))
+        # print(f"New order: {self.resourceTableRowsList[currentMarket]}")
     def setGoodsList(self):
         with open("Market.json", "r", encoding='iso-8859-1') as f:
             testFileLine = json.load(f)
