@@ -92,7 +92,7 @@ class UI(QMainWindow):
         self.fleetCarrierMarket = []
         self.tableLabels = []
         self.ships = []
-        self.transactions = []
+        # self.transactions = []
         self.previousStationIndex = -2
 
         #initialize windows
@@ -253,7 +253,7 @@ class UI(QMainWindow):
 
 
     def getLogFileData(self):
-        self.transactions.clear()
+        # self.transactions.clear()
 
         print("Starting logfile gathering")
         self.findLogfiles()
@@ -262,7 +262,7 @@ class UI(QMainWindow):
         self.saveColonies("importantLogs.txt")
         self.populateStationList()
         self.populateShipList()
-        self.populateCarrierList()
+        # self.populateCarrierList()
 
 
     def findLogfiles(self):
@@ -343,8 +343,8 @@ class UI(QMainWindow):
                                 stationType = "other"
                         # Station format: ID, Name, time accessed, type
                         self.uniqueStations.append([rawLine["MarketID"], cleanStationName, rawLine["timestamp"], stationType])
-                if ("MarketSell" in rawLine.values() or "MarketBuy" in rawLine.values()):
-                    self.transactions.append(rawLine)
+                # if ("MarketSell" in rawLine.values() or "MarketBuy" in rawLine.values()):
+                #     self.transactions.append(rawLine)
 
         self.lastFileName = logfile
 
@@ -516,6 +516,7 @@ class UI(QMainWindow):
         self.resourceTableList.setRowCount(0)
         self.resourceTableList.setHorizontalHeaderLabels([])
         self.resourceTableList.setVerticalHeaderLabels([])
+        self.resourceTableList.setSortingEnabled(False)
         self.tableLabels.clear()
 
         if len(self.shipList) > 0:

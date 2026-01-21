@@ -4,3 +4,4 @@ importantLogs.txt
 OutpostScsStat.txt
 ships.txt
 currentImportantData.txt
+__pycache__/
