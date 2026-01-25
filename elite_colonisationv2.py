@@ -76,7 +76,7 @@ class UI(QMainWindow):
     def __init__(self, *args, **kwargs):
         super(UI, self).__init__()
         #properties
-        self.subVersion =".8"
+        self.subVersion =".9"
         self.olderThanNumDays = 0
         self.allTextSize = 12
         self.logfiles = []
@@ -812,7 +812,7 @@ class UI(QMainWindow):
                 + str(int(self.action24pt_2.isChecked())))
             f.write("\nHide_resources: ")
             f.write(str(int(self.actionHide_Finished_Resources.isChecked())))
-            f.write("\nHide_carrier_cargo: ")
+            f.write("\nHide_total_need: ")
             f.write(str(int(self.actionHide_total_need.isChecked())))
             f.write("\nGet_stats: ")
             f.write(str(int(self.actionload_stats.isChecked())))
