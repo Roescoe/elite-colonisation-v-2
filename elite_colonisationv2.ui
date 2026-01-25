@@ -6,7 +6,7 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>1400</width>
+    <width>750</width>
     <height>905</height>
    </rect>
   </property>
@@ -29,10 +29,10 @@
    <widget class="QWidget" name="layoutWidget">
     <property name="geometry">
      <rect>
-      <x>0</x>
-      <y>90</y>
-      <width>671</width>
-      <height>58</height>
+      <x>10</x>
+      <y>130</y>
+      <width>741</width>
+      <height>41</height>
      </rect>
     </property>
     <layout class="QGridLayout" name="selectAndUpdate">
@@ -42,7 +42,7 @@
      <item row="0" column="2">
       <widget class="QPushButton" name="update">
        <property name="sizePolicy">
-        <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
+        <sizepolicy hsizetype="MinimumExpanding" vsizetype="Fixed">
          <horstretch>0</horstretch>
          <verstretch>0</verstretch>
         </sizepolicy>
@@ -59,7 +59,7 @@ QPushButton:hover {background-color: rgb(24, 90, 0);}</string>
      <item row="0" column="0" colspan="2">
       <widget class="QComboBox" name="stationList">
        <property name="sizePolicy">
-        <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
+        <sizepolicy hsizetype="Expanding" vsizetype="Maximum">
          <horstretch>0</horstretch>
          <verstretch>0</verstretch>
         </sizepolicy>
@@ -72,9 +72,9 @@ QPushButton:hover {background-color: rgb(24, 90, 0);}</string>
     <property name="geometry">
      <rect>
       <x>10</x>
-      <y>130</y>
+      <y>169</y>
       <width>2000</width>
-      <height>700</height>
+      <height>661</height>
      </rect>
     </property>
     <property name="sizePolicy">
@@ -92,6 +92,27 @@ QPushButton:hover {background-color: rgb(24, 90, 0);}</string>
     <layout class="QGridLayout" name="resourcesLayout">
      <item row="0" column="0">
       <widget class="QScrollArea" name="scrollArea">
+       <property name="enabled">
+        <bool>true</bool>
+       </property>
+       <property name="sizePolicy">
+        <sizepolicy hsizetype="MinimumExpanding" vsizetype="Minimum">
+         <horstretch>0</horstretch>
+         <verstretch>0</verstretch>
+        </sizepolicy>
+       </property>
+       <property name="minimumSize">
+        <size>
+         <width>600</width>
+         <height>0</height>
+        </size>
+       </property>
+       <property name="baseSize">
+        <size>
+         <width>600</width>
+         <height>0</height>
+        </size>
+       </property>
        <property name="sizeAdjustPolicy">
         <enum>QAbstractScrollArea::AdjustToContents</enum>
        </property>
@@ -104,7 +125,7 @@ QPushButton:hover {background-color: rgb(24, 90, 0);}</string>
           <x>0</x>
           <y>0</y>
           <width>1980</width>
-          <height>680</height>
+          <height>641</height>
          </rect>
         </property>
         <widget class="Line" name="line">
@@ -137,20 +158,25 @@ QPushButton:hover {background-color: rgb(24, 90, 0);}</string>
      </item>
     </layout>
    </widget>
-   <widget class="QLineEdit" name="cargoSpace">
+   <widget class="QLabel" name="cargoSpace">
     <property name="geometry">
      <rect>
-      <x>870</x>
+      <x>420</x>
       <y>30</y>
       <width>131</width>
       <height>25</height>
      </rect>
     </property>
+    <property name="font">
+     <font>
+      <pointsize>12</pointsize>
+     </font>
+    </property>
    </widget>
    <widget class="QComboBox" name="shipList">
     <property name="geometry">
      <rect>
-      <x>870</x>
+      <x>410</x>
       <y>0</y>
       <width>131</width>
       <height>25</height>
@@ -160,33 +186,43 @@ QPushButton:hover {background-color: rgb(24, 90, 0);}</string>
    <widget class="QLabel" name="ship_label">
     <property name="geometry">
      <rect>
-      <x>825</x>
+      <x>370</x>
       <y>0</y>
-      <width>45</width>
+      <width>41</width>
       <height>25</height>
      </rect>
+    </property>
+    <property name="font">
+     <font>
+      <pointsize>12</pointsize>
+     </font>
     </property>
     <property name="text">
      <string>Ship:</string>
     </property>
     <property name="alignment">
-     <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+     <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>
     </property>
    </widget>
    <widget class="QLabel" name="cargo_label">
     <property name="geometry">
      <rect>
-      <x>825</x>
+      <x>370</x>
       <y>30</y>
-      <width>45</width>
+      <width>51</width>
       <height>25</height>
      </rect>
+    </property>
+    <property name="font">
+     <font>
+      <pointsize>12</pointsize>
+     </font>
     </property>
     <property name="text">
      <string>Cargo:</string>
     </property>
     <property name="alignment">
-     <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+     <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>
     </property>
    </widget>
    <widget class="QLabel" name="trips_left">
@@ -218,11 +254,16 @@ QPushButton:hover {background-color: rgb(24, 90, 0);}</string>
    <widget class="QLabel" name="percent_complete">
     <property name="geometry">
      <rect>
-      <x>370</x>
-      <y>0</y>
-      <width>291</width>
+      <x>20</x>
+      <y>60</y>
+      <width>231</width>
       <height>21</height>
      </rect>
+    </property>
+    <property name="font">
+     <font>
+      <pointsize>11</pointsize>
+     </font>
     </property>
     <property name="layoutDirection">
      <enum>Qt::LeftToRight</enum>
@@ -231,14 +272,14 @@ QPushButton:hover {background-color: rgb(24, 90, 0);}</string>
      <string/>
     </property>
     <property name="alignment">
-     <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+     <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>
     </property>
    </widget>
    <widget class="QLabel" name="total_materials">
     <property name="geometry">
      <rect>
       <x>370</x>
-      <y>30</y>
+      <y>60</y>
       <width>291</width>
       <height>21</height>
      </rect>
@@ -247,14 +288,14 @@ QPushButton:hover {background-color: rgb(24, 90, 0);}</string>
      <string/>
     </property>
     <property name="alignment">
-     <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+     <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>
     </property>
    </widget>
    <widget class="QLabel" name="materials_still_needed">
     <property name="geometry">
      <rect>
       <x>370</x>
-      <y>60</y>
+      <y>90</y>
       <width>291</width>
       <height>21</height>
      </rect>
@@ -263,33 +304,7 @@ QPushButton:hover {background-color: rgb(24, 90, 0);}</string>
      <string/>
     </property>
     <property name="alignment">
-     <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
-    </property>
-   </widget>
-   <widget class="QLabel" name="carrierLabel">
-    <property name="geometry">
-     <rect>
-      <x>816</x>
-      <y>60</y>
-      <width>51</width>
-      <height>20</height>
-     </rect>
-    </property>
-    <property name="text">
-     <string>Carrier:</string>
-    </property>
-    <property name="alignment">
-     <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
-    </property>
-   </widget>
-   <widget class="QComboBox" name="carrierSelect">
-    <property name="geometry">
-     <rect>
-      <x>870</x>
-      <y>60</y>
-      <width>191</width>
-      <height>25</height>
-     </rect>
+     <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>
     </property>
    </widget>
   </widget>
@@ -298,7 +313,7 @@ QPushButton:hover {background-color: rgb(24, 90, 0);}</string>
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>1400</width>
+     <width>750</width>
      <height>22</height>
     </rect>
    </property>
@@ -341,7 +356,6 @@ QPushButton:hover {background-color: rgb(24, 90, 0);}</string>
      <addaction name="action24pt_2"/>
     </widget>
     <addaction name="actionHide_Finished_Resources"/>
-    <addaction name="actionHide_carrier_cargo"/>
     <addaction name="actionHide_total_need"/>
     <addaction name="menuTable_Font_Size"/>
     <addaction name="separator"/>

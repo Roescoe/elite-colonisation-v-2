@@ -76,7 +76,7 @@ class UI(QMainWindow):
     def __init__(self, *args, **kwargs):
         super(UI, self).__init__()
         #properties
-        self.subVersion =".5"
+        self.subVersion =".6"
         self.olderThanNumDays = 0
         self.allTextSize = 12
         self.logfiles = []
@@ -124,7 +124,6 @@ class UI(QMainWindow):
         self.action16pt_2.triggered.connect(lambda:self.setTextSize(10))
         self.action24pt_2.triggered.connect(lambda:self.setTextSize(1))
         self.actionHide_total_need.triggered.connect(lambda:self.formatResourceTable())
-        self.actionHide_carrier_cargo.triggered.connect(lambda:self.formatResourceTable())
         self.actionHide_Finished_Resources.triggered.connect(lambda:self.formatResourceTable())
         self.stationList.activated.connect(lambda:self.updateTableData())
         self.shipList.currentIndexChanged.connect(lambda:self.displayColony())
@@ -232,11 +231,6 @@ class UI(QMainWindow):
                         if isinstance(int(line.split("Hide_resources: ",1)[1].strip()), int):
                             hideBoxIsChecked = bool(int(line.split("Hide_resources: ",1)[1].strip()))
                             self.actionHide_Finished_Resources.setChecked(hideBoxIsChecked)
-                    if line.startswith("Hide_carrier_cargo:"):
-                        print("Found checkbox in settings \'"+ line.split("Hide_carrier_cargo: ",1)[1].strip()+"\'")
-                        if isinstance(int(line.split("Hide_carrier_cargo: ",1)[1].strip()), int):
-                            hideBoxIsChecked = bool(int(line.split("Hide_carrier_cargo: ",1)[1].strip()))
-                            self.actionHide_carrier_cargo.setChecked(hideBoxIsChecked)
                     if line.startswith("Hide_total_need:"):
                         print("Found checkbox in settings \'"+ line.split("Hide_total_need: ",1)[1].strip()+"\'")
                         if isinstance(int(line.split("Hide_total_need: ",1)[1].strip()), int):
@@ -383,7 +377,7 @@ class UI(QMainWindow):
                     self.shipList.addItem(str(f"{ship[0]} ({ship[1]})"))
         if self.shipList:
             current_ship = self.shipList.currentText()
-            self.cargoSpace.setText(current_ship.split("(",1)[1].split(")",1)[0])
+            self.cargoSpace.setText(f"{int(current_ship.split('(',1)[1].split(')',1)[0]):,d}")
         print("Got Ships.")
 
     def populateCarrierList(self):
@@ -520,7 +514,7 @@ class UI(QMainWindow):
         self.tableLabels.clear()
 
         if len(self.shipList) > 0:
-            cargo = int(self.cargoSpace.text())
+            cargo = int(self.cargoSpace.text().replace(',', ''))
         
         print("Ships?:", self.shipList)
         print("cargo?:", cargo)
@@ -547,8 +541,6 @@ class UI(QMainWindow):
             self.tableLabels.append("Total Need")
             self.tableLabels.append("Current Need")
             self.tableLabels.append("Trips Remaining")
-            self.tableLabels.append("Carrier Need")
-            # self.tableLabels.append("Carrier Current")
             self.resourceTableList.setRowCount(len(currentTable))
             self.resourceTableList.setColumnCount(len(self.tableLabels))
             print(f"tableLabels: {self.tableLabels}")
@@ -587,10 +579,6 @@ class UI(QMainWindow):
                 self.resourceTableList.setColumnHidden(self.tableLabels.index("Total Need"), True)
             else:
                 self.resourceTableList.setColumnHidden(self.tableLabels.index("Total Need"), False)
-            if self.actionHide_carrier_cargo.isChecked():
-                self.resourceTableList.setColumnHidden(self.tableLabels.index("Carrier Need"), True)
-            else:
-                self.resourceTableList.setColumnHidden(self.tableLabels.index("Carrier Need"), False)
             if self.actionHide_Finished_Resources.isChecked():
                 for row in range(self.resourceTableList.rowCount()):
                     if self.resourceTableList.item(row, self.tableLabels.index("Current Need")) is not None:
@@ -611,7 +599,6 @@ class UI(QMainWindow):
                 self.resourceTableList.setColumnWidth(self.tableLabels.index("Total Need"), int(7 * self.allTextSize))
                 self.resourceTableList.setColumnWidth(self.tableLabels.index("Current Need"), int(8 * self.allTextSize))
                 self.resourceTableList.setColumnWidth(self.tableLabels.index("Trips Remaining"), int(9 * self.allTextSize))
-                self.resourceTableList.setColumnWidth(self.tableLabels.index("Carrier Need"), int(15 * self.allTextSize))
             self.resourceTableList.setFont(QFont('Calibri',self.allTextSize))
 
             self.resourceTableList.setSortingEnabled(True)
@@ -631,18 +618,18 @@ class UI(QMainWindow):
 
         if self.resourceTableList and len(self.tableLabels) > 0:
             for trip in range(self.resourceTableList.rowCount()):
-                if self.resourceTableList.item(trip, self.tableLabels.index("Trips Remaining")):
-                    tripsCalc += float(self.resourceTableList.item(trip, self.tableLabels.index("Trips Remaining")).text())
                 if self.resourceTableList.item(trip, self.tableLabels.index("Total Need")):
                     totalMaterials += int(self.resourceTableList.item(trip, self.tableLabels.index("Total Need")).text().replace(',', ''))
                 if self.resourceTableList.item(trip, self.tableLabels.index("Current Need")) and self.resourceTableList.item(trip, self.tableLabels.index("Current Need")).text() != "Done":
                     stillNeeded += int(self.resourceTableList.item(trip, self.tableLabels.index("Current Need")).text().replace(',', ''))
-        tripsCalc = round(tripsCalc, 2)
+        tripsCalc = round(stillNeeded/int(self.cargoSpace.text().replace(',', '')), 2)
 
         if totalMaterials > 0:
-            percentPerTrip = round(100 * int(self.cargoSpace.text()) / totalMaterials, 2)
+            percentPerTrip = round(100 * int(self.cargoSpace.text().replace(',', '')) / totalMaterials, 2)
         if stillNeeded > 0:
             percentComplete = round(100 * (1 - stillNeeded/totalMaterials), 2)
+        else:
+            percentComplete = "Done!"
 
         self.trips_left.setFont(QFont('Calibri',14))
         self.percent_per_trip.setFont(QFont('Calibri',14))
@@ -654,7 +641,7 @@ class UI(QMainWindow):
         self.percent_per_trip.setText(f"Percent per Trip: {percentPerTrip}%")
         self.total_materials.setText(f"Total Materials: {totalMaterials:,}")
         self.materials_still_needed.setText(f"Materials Still Needed: {stillNeeded:,}")
-        self.percent_complete.setText(f"Percent Complete: {percentComplete}%")
+        self.percent_complete.setText(f"Percent Complete: {percentComplete}")
 
     def setFleetCarriers(self):
         for station in self.uniqueStations:
@@ -820,8 +807,6 @@ class UI(QMainWindow):
             f.write("\nHide_resources: ")
             f.write(str(int(self.actionHide_Finished_Resources.isChecked())))
             f.write("\nHide_carrier_cargo: ")
-            f.write(str(int(self.actionHide_carrier_cargo.isChecked())))
-            f.write("\nHide_total_need: ")
             f.write(str(int(self.actionHide_total_need.isChecked())))
             f.write("\nGet_stats: ")
             f.write(str(int(self.actionload_stats.isChecked())))
