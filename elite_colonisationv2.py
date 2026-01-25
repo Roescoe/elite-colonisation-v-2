@@ -126,7 +126,7 @@ class UI(QMainWindow):
         self.actionHide_total_need.triggered.connect(lambda:self.formatResourceTable())
         self.actionHide_Finished_Resources.triggered.connect(lambda:self.formatResourceTable())
         self.stationList.activated.connect(lambda:self.updateTableData())
-        self.shipList.currentIndexChanged.connect(lambda:self.displayColony())
+        self.shipList.currentIndexChanged.connect(lambda:self.updateCargo())
         self.update.clicked.connect(lambda:self.updateTableData())
         self.actionload_stats.triggered.connect(lambda:self.getScsStats())
         self.resourceTableList.horizontalHeader().sectionClicked.connect(self.sortedColumnFunction)
@@ -379,6 +379,12 @@ class UI(QMainWindow):
             current_ship = self.shipList.currentText()
             self.cargoSpace.setText(f"{int(current_ship.split('(',1)[1].split(')',1)[0]):,d}")
         print("Got Ships.")
+
+    def updateCargo(self):
+        if self.shipList:
+            current_ship = self.shipList.currentText()
+            self.cargoSpace.setText(f"{int(current_ship.split('(',1)[1].split(')',1)[0]):,d}")
+        self.displayColony()
 
     def populateCarrierList(self):
         carriers = []
