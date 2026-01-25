@@ -64,6 +64,11 @@ QPushButton:hover {background-color: rgb(24, 90, 0);}</string>
          <verstretch>0</verstretch>
         </sizepolicy>
        </property>
+       <property name="font">
+        <font>
+         <pointsize>13</pointsize>
+        </font>
+       </property>
       </widget>
      </item>
     </layout>
