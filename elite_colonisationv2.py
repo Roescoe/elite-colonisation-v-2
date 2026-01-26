@@ -76,7 +76,7 @@ class UI(QMainWindow):
     def __init__(self, *args, **kwargs):
         super(UI, self).__init__()
         #properties
-        self.subVersion =".9"
+        self.subVersion =".10"
         self.olderThanNumDays = 0
         self.allTextSize = 12
         self.logfiles = []
@@ -408,10 +408,10 @@ class UI(QMainWindow):
         currentCarrier = str(self.carrierSelect.currentText().split("(",1)[1].split(")",1)[0])
         cargoNaming = {}
 
-        with open("Market.json", "r", encoding='iso-8859-1') as mj:
+        with open("MarketLines.json", "r", encoding='iso-8859-1') as mj:
             testFileLine = json.load(mj)
 
-        for i in testFileLine["Items"]:
+        for i in testFileLine:
             if "Name" in i and "Name_Localised" in i:
                 cargoNaming[i["Name"].split("_",1)[0].split("$",1)[1]] = i["Name_Localised"]
         print(f"cargoNaming: {cargoNaming}")
@@ -707,10 +707,10 @@ class UI(QMainWindow):
         # resortedRowList = OrderedDict(sorted(resortedRowList.items(), key=lambda item: item[index].text()))
         # print(f"New order: {self.resourceTableRowsList[currentMarket]}")
     def setGoodsList(self):
-        with open("Market.json", "r", encoding='iso-8859-1') as f:
+        with open("MarketLines.json", "r", encoding='iso-8859-1') as f:
             testFileLine = json.load(f)
 
-        for i in testFileLine["Items"]:
+        for i in testFileLine:
             if "Name_Localised" in i and "Category_Localised" in i:
                 self.resourceTypeDict[i["Name_Localised"]] = i["Category_Localised"]
 
@@ -824,5 +824,7 @@ class UI(QMainWindow):
 if __name__ == '__main__':
     app = QApplication(sys.argv)
     uIWindow = UI()
+    print("In main function")
+    uIWindow.displayColony()
     # asyncio.run(uIWindow.check_for_new_files())
     app.exec()

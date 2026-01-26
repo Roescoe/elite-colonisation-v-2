@@ -67,10 +67,10 @@ class createTable():
             print(f"The row tuple to print: {qTypeItem.text()}, {qResourceItem.text()}, {qAmountItem.text()}, [{qCurrentItem.text()}, {doneState}], {qTripItem.text()}")
 
     def setGoodsList(self):
-        with open("Market.json", "r", encoding='iso-8859-1') as f:
+        with open("MarketLines.json", "r", encoding='iso-8859-1') as f:
             testFileLine = json.load(f)
 
-        for i in testFileLine["Items"]:
+        for i in testFileLine:
             if "Name_Localised" in i and "Category_Localised" in i:
                 self.resourceTypeDict[i["Name_Localised"]] = i["Category_Localised"]
         # print(f"All the resources: {self.resourceTypeDict}")
