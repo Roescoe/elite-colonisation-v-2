@@ -76,7 +76,7 @@ class UI(QMainWindow):
     def __init__(self, *args, **kwargs):
         super(UI, self).__init__()
         #properties
-        self.subVersion =".10"
+        self.subVersion =".11"
         self.olderThanNumDays = 0
         self.allTextSize = 12
         self.logfiles = []
@@ -103,7 +103,6 @@ class UI(QMainWindow):
         self.LogFileDialog = LogFileDialogClass()
 
         #set up stuff
-        self.setGoodsList()
         self.getFileSettings()
         self.getLogFileData()
         
@@ -706,13 +705,6 @@ class UI(QMainWindow):
         print(f"The list being sorted: {resortedRowList.items()}")
         # resortedRowList = OrderedDict(sorted(resortedRowList.items(), key=lambda item: item[index].text()))
         # print(f"New order: {self.resourceTableRowsList[currentMarket]}")
-    def setGoodsList(self):
-        with open("MarketLines.json", "r", encoding='iso-8859-1') as f:
-            testFileLine = json.load(f)
-
-        for i in testFileLine:
-            if "Name_Localised" in i and "Category_Localised" in i:
-                self.resourceTypeDict[i["Name_Localised"]] = i["Category_Localised"]
 
     def getScsStats(self):
         highestResource = {}
