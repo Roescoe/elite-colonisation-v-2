@@ -140,9 +140,9 @@ class UI(QMainWindow):
             self.LogFileDialog.FileNamelineEdit.setText("")
 
     def updateTableData(self):
+        print("**Clicked Update or changed menu option**")
         self.getLogFileData()
         self.displayColony()
-        # self.calculateTransactions()
 
     def setLogfileLoadRange(self, loadTimeSelect, refreshList):
         
@@ -354,9 +354,10 @@ class UI(QMainWindow):
             self.previousStationIndex = savedIndex
             self.stationList.clear()
             for station in self.uniqueStations:
-                if self.eliteFileTime < station[2]:
-                    if station[3] == "colony":
-                        self.stationList.addItem(str(station[1]))
+                print(f"The station time? {station[2]} the file time? {self.eliteFileTime}")
+                # if self.eliteFileTime < station[2]:
+                if station[3] == "colony":
+                    self.stationList.addItem(str(station[1]))
             print("Index of current colony: ", savedIndex)
             if savedIndex == -1:
                 self.stationList.setCurrentIndex(0)
@@ -509,7 +510,13 @@ class UI(QMainWindow):
         activeResources = []
         cargo = 0
         doneState = -1
-        currentMarket = int(self.stationList.currentText().split("(",1)[1].split(")",1)[0])
+        currentTable = {}
+        currentMarket = ""
+
+        if self.stationList.currentText():
+            currentMarket = int(self.stationList.currentText().split("(",1)[1].split(")",1)[0])
+        else:
+            return -1
 
         # Clean out table        
         self.resourceTableList.setRowCount(0)
@@ -533,9 +540,9 @@ class UI(QMainWindow):
                 resourceTableRows = resourceTable.getRows()
                 self.resourceTableRowsList[self.marketEntries[entry]["MarketID"]] = resourceTableRows
 
-        print(f"self.resourceTableRowsList current table: {self.resourceTableRowsList[currentMarket]}")
 
         if currentMarket in self.resourceTableRowsList:
+            print(f"self.resourceTableRowsList current table: {self.resourceTableRowsList[currentMarket]}")
             currentTable = self.resourceTableRowsList[currentMarket]
 
         if self.resourceTableRowsList and currentTable:
@@ -618,6 +625,7 @@ class UI(QMainWindow):
         percentComplete = 0
         carrierNeed = []
         carrierCurrent = []
+        cargo = -1
 
         print("Calculating various stats...")
 
@@ -627,10 +635,12 @@ class UI(QMainWindow):
                     totalMaterials += int(self.resourceTableList.item(trip, self.tableLabels.index("Total Need")).text().replace(',', ''))
                 if self.resourceTableList.item(trip, self.tableLabels.index("Current Need")) and self.resourceTableList.item(trip, self.tableLabels.index("Current Need")).text() != "Done":
                     stillNeeded += int(self.resourceTableList.item(trip, self.tableLabels.index("Current Need")).text().replace(',', ''))
-        tripsCalc = round(stillNeeded/int(self.cargoSpace.text().replace(',', '')), 2)
+        if self.cargoSpace.text():
+            cargo = int(self.cargoSpace.text().replace(',', ''))
+        tripsCalc = round(stillNeeded/cargo, 2)
 
         if totalMaterials > 0:
-            percentPerTrip = round(100 * int(self.cargoSpace.text().replace(',', '')) / totalMaterials, 2)
+            percentPerTrip = round((100 * cargo) / totalMaterials, 2)
         if stillNeeded > 0:
             percentComplete = round(100 * (1 - stillNeeded/totalMaterials), 2)
         else:
@@ -647,13 +657,6 @@ class UI(QMainWindow):
         self.total_materials.setText(f"Total Materials: {totalMaterials:,}")
         self.materials_still_needed.setText(f"Materials Still Needed: {stillNeeded:,}")
         self.percent_complete.setText(f"Percent Complete: {percentComplete}")
-
-    def setFleetCarriers(self):
-        for station in self.uniqueStations:
-            if self.eliteFileTime < station[2]:
-                if station[3] == "fleet":
-                    self.fleetCarrierMarket.append([str(station[1]).split("(",1)[1].split(")",1)[0]])
-        print(f"fleetCarrierMarket: {self.fleetCarrierMarket}")
 
     def clear_layout(self, layout):
         for i in reversed(range(layout.count())):
@@ -683,7 +686,7 @@ class UI(QMainWindow):
         timeAgo = 0
         match adjustmentHours:
             case 10000:
-                timeAgo = 0
+                timeAgo = -1
             case 1000:
                 timeAgo = 24*1
             case 100:
@@ -693,10 +696,13 @@ class UI(QMainWindow):
             case 1:
                 timeAgo = 24*100
 
-        formatted_time = datetime.now(timezone.utc) - timedelta(hours = timeAgo)
-        formatted_time.strftime("%Y-%m-%dT%H:%M:%SZ")
-        print("Time now: ", formatted_time)
-        self.eliteFileTime = str(formatted_time)
+        if timeAgo == -1:
+            self.eliteFileTime = "2014-12-16T12:00:00Z"
+        else:
+            formatted_time = datetime.now(timezone.utc) - timedelta(hours = timeAgo)
+            formatted_time.strftime("%Y-%m-%dT%H:%M:%SZ")
+            print("Time now: ", formatted_time)
+            self.eliteFileTime = str(formatted_time.strftime("%Y-%m-%dT%H:%M:%SZ"))
 
     def sortedColumnFunction(self, index):
         print(f"You just sorted column {index} called: {self.resourceTableList.horizontalHeaderItem(index).text()}")
