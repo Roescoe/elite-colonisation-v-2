@@ -96,7 +96,7 @@ class UI(QMainWindow):
         self.previousStationIndex = -2
 
         #initialize windows
-        uic.loadUi('elite_colonisationv2.ui', self)
+        uic.loadUi('elite_colonisationv2Alt.ui', self)
         self.setWindowIcon(QtGui.QIcon('ColoniseLogo.png'))
         app.setWindowIcon(QtGui.QIcon('ColoniseLogo.png'))
         self.show()
@@ -377,13 +377,13 @@ class UI(QMainWindow):
                     self.shipList.addItem(str(f"{ship[0]} ({ship[1]})"))
         if self.shipList:
             current_ship = self.shipList.currentText()
-            self.cargoSpace.setText(f"{int(current_ship.split('(',1)[1].split(')',1)[0]):,d}")
+            self.cargoSpace = int(current_ship.split('(',1)[1].split(')',1)[0])
         print("Got Ships.")
 
     def updateCargo(self):
         if self.shipList:
             current_ship = self.shipList.currentText()
-            self.cargoSpace.setText(f"{int(current_ship.split('(',1)[1].split(')',1)[0]):,d}")
+            self.cargoSpace = int(current_ship.split('(',1)[1].split(')',1)[0])
         self.displayColony()
 
     def populateCarrierList(self):
@@ -526,7 +526,7 @@ class UI(QMainWindow):
         self.tableLabels.clear()
 
         if len(self.shipList) > 0:
-            cargo = int(self.cargoSpace.text().replace(',', ''))
+            cargo = self.cargoSpace
         
         print("Ships?:", self.shipList)
         print("cargo?:", cargo)
@@ -636,8 +636,8 @@ class UI(QMainWindow):
                     totalMaterials += int(self.resourceTableList.item(trip, self.tableLabels.index("Total Need")).text().replace(',', ''))
                 if self.resourceTableList.item(trip, self.tableLabels.index("Current Need")) and self.resourceTableList.item(trip, self.tableLabels.index("Current Need")).text() != "Done":
                     stillNeeded += int(self.resourceTableList.item(trip, self.tableLabels.index("Current Need")).text().replace(',', ''))
-        if self.cargoSpace.text():
-            cargo = int(self.cargoSpace.text().replace(',', ''))
+        if self.cargoSpace:
+            cargo = self.cargoSpace
         tripsCalc = round(stillNeeded/cargo, 2)
 
         if totalMaterials > 0:
@@ -647,17 +647,19 @@ class UI(QMainWindow):
         else:
             percentComplete = "Done!"
 
+        self.ship_label.setFont(QFont('Calibri',14))
         self.trips_left.setFont(QFont('Calibri',14))
         self.percent_per_trip.setFont(QFont('Calibri',14))
         self.total_materials.setFont(QFont('Calibri',14))
-        self.materials_still_needed.setFont(QFont('Calibri',14))
+        # self.materials_still_needed.setFont(QFont('Calibri',14))
         self.percent_complete.setFont(QFont('Calibri',14))
 
-        self.trips_left.setText(f"Trips left: {tripsCalc}")
-        self.percent_per_trip.setText(f"Percent per Trip: {percentPerTrip}%")
-        self.total_materials.setText(f"Total Materials: {totalMaterials:,}")
-        self.materials_still_needed.setText(f"Materials Still Needed: {stillNeeded:,}")
-        self.percent_complete.setText(f"Percent Complete: {percentComplete}")
+        self.ship_label.setText(f"Ship:")
+        self.trips_left.setText(f"({tripsCalc} Trips)")
+        self.percent_per_trip.setText(f"Percent/Trip: {percentPerTrip}%")
+        self.total_materials.setText(f"Remaining Materials:   {stillNeeded:,} / {totalMaterials:,}")
+        # self.materials_still_needed.setText(f"Remaining Materials: ")
+        self.percent_complete.setText(f"Progress: {percentComplete}%")
 
     def clear_layout(self, layout):
         for i in reversed(range(layout.count())):
