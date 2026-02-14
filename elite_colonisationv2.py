@@ -648,6 +648,7 @@ class UI(QMainWindow):
             percentComplete = "Done!"
 
         self.ship_label.setFont(QFont('Calibri',14))
+        self.shipList.setFont(QFont('Calibri',14))
         self.trips_left.setFont(QFont('Calibri',14))
         self.percent_per_trip.setFont(QFont('Calibri',14))
         self.total_materials.setFont(QFont('Calibri',14))
