@@ -355,9 +355,9 @@ class UI(QMainWindow):
             self.stationList.clear()
             for station in self.uniqueStations:
                 print(f"The station time? {station[2]} the file time? {self.eliteFileTime}")
-                # if self.eliteFileTime < station[2]:
-                if station[3] == "colony":
-                    self.stationList.addItem(str(station[1]))
+                if self.eliteFileTime < station[2]:
+                    if station[3] == "colony":
+                        self.stationList.addItem(str(station[1]))
             print("Index of current colony: ", savedIndex)
             if savedIndex == -1:
                 self.stationList.setCurrentIndex(0)
