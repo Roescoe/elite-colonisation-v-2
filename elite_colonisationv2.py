@@ -76,7 +76,7 @@ class UI(QMainWindow):
     def __init__(self, *args, **kwargs):
         super(UI, self).__init__()
         #properties
-        self.subVersion =".12"
+        self.subVersion =".13"
         self.olderThanNumDays = 0
         self.allTextSize = 12
         self.logfiles = []
