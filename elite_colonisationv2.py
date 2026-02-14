@@ -76,7 +76,7 @@ class UI(QMainWindow):
     def __init__(self, *args, **kwargs):
         super(UI, self).__init__()
         #properties
-        self.subVersion =".14a"
+        self.subVersion =".15a"
         self.olderThanNumDays = 0
         self.allTextSize = 12
         self.logfiles = []
@@ -209,7 +209,7 @@ class UI(QMainWindow):
 
         self.deleteOldLogFile("importantLogs.txt")
         self.deleteOldLogFile("currentImportantData.txt")
-        self.setWindowTitle(f"CMDR Roescoe's Colonisation App V2{self.subVersion}")
+        self.setWindowTitle(f"CMDR Roescoe's Colonisation App v2{self.subVersion}")
         if os.path.exists("settings.txt"):
             with open("settings.txt", "r") as f:
                 testFileLine = f.readlines()
@@ -374,16 +374,16 @@ class UI(QMainWindow):
             for ship in self.ships:
                 items = [self.shipList.itemText(i) for i in range(self.shipList.count())]
                 if str(ship[1]) not in str(items):
-                    self.shipList.addItem(str(f"{ship[0]} ({ship[1]})"))
+                    self.shipList.addItem(str(f"{ship[0]} ({ship[1]:,})"))
         if self.shipList:
             current_ship = self.shipList.currentText()
-            self.cargoSpace = int(current_ship.split('(',1)[1].split(')',1)[0])
+            self.cargoSpace = int(current_ship.replace(",", "").split('(',1)[1].split(')',1)[0])
         print("Got Ships.")
 
     def updateCargo(self):
         if self.shipList:
             current_ship = self.shipList.currentText()
-            self.cargoSpace = int(current_ship.split('(',1)[1].split(')',1)[0])
+            self.cargoSpace = int(current_ship.replace(",", "").split('(',1)[1].split(')',1)[0])
         self.displayColony()
 
     def populateCarrierList(self):
@@ -651,14 +651,12 @@ class UI(QMainWindow):
         self.trips_left.setFont(QFont('Calibri',14))
         self.percent_per_trip.setFont(QFont('Calibri',14))
         self.total_materials.setFont(QFont('Calibri',14))
-        # self.materials_still_needed.setFont(QFont('Calibri',14))
         self.percent_complete.setFont(QFont('Calibri',14))
 
         self.ship_label.setText(f"Ship:")
         self.trips_left.setText(f"({tripsCalc} Trips)")
         self.percent_per_trip.setText(f"Percent/Trip: {percentPerTrip}%")
         self.total_materials.setText(f"Remaining Materials:   {stillNeeded:,} / {totalMaterials:,}")
-        # self.materials_still_needed.setText(f"Remaining Materials: ")
         self.percent_complete.setText(f"Progress: {percentComplete}%")
 
     def clear_layout(self, layout):
