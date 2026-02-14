@@ -76,7 +76,7 @@ class UI(QMainWindow):
     def __init__(self, *args, **kwargs):
         super(UI, self).__init__()
         #properties
-        self.subVersion =".13"
+        self.subVersion =".14"
         self.olderThanNumDays = 0
         self.allTextSize = 12
         self.logfiles = []
@@ -615,7 +615,8 @@ class UI(QMainWindow):
 
             self.resourceTableList.setSortingEnabled(True)
             self.resourceTableList.verticalHeader().setVisible(False)
-            self.scrollArea.setWidget(self.resourceTableList)
+            # self.tableDisplayWidget.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding)
+            self.tableDisplayLayout.addWidget(self.resourceTableList)
 
     def displayColonyStats(self):
         tripsCalc = 0
