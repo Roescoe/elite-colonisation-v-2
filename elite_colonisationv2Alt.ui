@@ -43,7 +43,7 @@
     <item row="3" column="3">
      <widget class="QLabel" name="trips_left">
       <property name="text">
-       <string>TextLabel</string>
+       <string>tripLabel</string>
       </property>
      </widget>
     </item>
@@ -53,7 +53,7 @@
     <item row="3" column="4">
      <widget class="QLabel" name="percent_complete">
       <property name="text">
-       <string>TextLabel</string>
+       <string>completeLabel</string>
       </property>
       <property name="alignment">
        <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
@@ -74,7 +74,7 @@ QPushButton:hover {background-color: rgb(24, 90, 0);}</string>
     <item row="3" column="0" colspan="3">
      <widget class="QLabel" name="total_materials">
       <property name="text">
-       <string>TextLabel</string>
+       <string>MaterialLabel</string>
       </property>
      </widget>
     </item>
@@ -92,7 +92,7 @@ QPushButton:hover {background-color: rgb(24, 90, 0);}</string>
        </font>
       </property>
       <property name="text">
-       <string>TextLabel</string>
+       <string>ShipLabel</string>
       </property>
       <property name="alignment">
        <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>
@@ -105,7 +105,7 @@ QPushButton:hover {background-color: rgb(24, 90, 0);}</string>
     <item row="2" column="4">
      <widget class="QLabel" name="percent_per_trip">
       <property name="text">
-       <string>TextLabel</string>
+       <string>percentLabel</string>
       </property>
       <property name="alignment">
        <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
