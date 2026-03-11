@@ -92,6 +92,7 @@ class UI(QMainWindow):
         self.fleetCarrierMarket = []
         self.tableLabels = []
         self.ships = []
+        self.cargoSpace = -1
         # self.transactions = []
         self.previousStationIndex = -2
 
