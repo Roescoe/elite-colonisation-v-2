@@ -76,7 +76,7 @@ class UI(QMainWindow):
     def __init__(self, *args, **kwargs):
         super(UI, self).__init__()
         #properties
-        self.subVersion =".16a"
+        self.subVersion =".17a"
         self.olderThanNumDays = 0
         self.allTextSize = 12
         self.logfiles = []
@@ -91,7 +91,7 @@ class UI(QMainWindow):
         self.marketEntries = {}
         self.fleetCarrierMarket = []
         self.tableLabels = []
-        self.ships = []
+        self.ships = OrderedDict()
         self.cargoSpace = -1
         # self.transactions = []
         self.previousStationIndex = -2
@@ -129,7 +129,6 @@ class UI(QMainWindow):
         self.shipList.currentIndexChanged.connect(lambda:self.updateCargo())
         self.update.clicked.connect(lambda:self.updateTableData())
         self.actionload_stats.triggered.connect(lambda:self.getScsStats())
-        self.resourceTableList.horizontalHeader().sectionClicked.connect(self.sortedColumnFunction)
 
         self.actionQuit.triggered.connect(lambda:self.saveAndQuit())
 
@@ -305,13 +304,7 @@ class UI(QMainWindow):
                 if "Loadout" in rawLine.values() and int(rawLine["CargoCapacity"]) > 0:
                     # print("Found a ship")
                     if "CargoCapacity" in rawLine:
-                        if self.ships:
-                            for ship in self.ships:
-                                if str(rawLine["CargoCapacity"]) != str(ship[1]): # Cargo capacity is different
-                                    self.ships.append([rawLine["ShipIdent"],rawLine["CargoCapacity"],rawLine["timestamp"]])
-                                    break
-                        else:
-                            self.ships.append([rawLine["ShipIdent"],rawLine["CargoCapacity"],rawLine["timestamp"]])
+                        self.ships[rawLine["CargoCapacity"]] = ([rawLine["ShipIdent"],rawLine["timestamp"]])
                 if "Docked" in rawLine.values():
                     isUnique = True
                     for i, station in enumerate(self.uniqueStations):
@@ -370,12 +363,9 @@ class UI(QMainWindow):
     def populateShipList(self):
         print(f"All the ships: {self.ships}")
         if self.ships:
-            self.ships.sort(key=lambda ship:ship[2], reverse=True)
-
+            self.ships = OrderedDict(sorted(self.ships.items(), key=lambda item: item[1][1], reverse=True))
             for ship in self.ships:
-                items = [self.shipList.itemText(i) for i in range(self.shipList.count())]
-                if str(ship[1]) not in str(items):
-                    self.shipList.addItem(str(f"{ship[0]} ({ship[1]:,})"))
+                self.shipList.addItem(str(f"{self.ships[ship][0]} ({ship:,})"))
         if self.shipList:
             current_ship = self.shipList.currentText()
             self.cargoSpace = int(current_ship.replace(",", "").split('(',1)[1].split(')',1)[0])
@@ -543,7 +533,6 @@ class UI(QMainWindow):
 
 
         if currentMarket in self.resourceTableRowsList:
-            print(f"self.resourceTableRowsList current table: {self.resourceTableRowsList[currentMarket]}")
             currentTable = self.resourceTableRowsList[currentMarket]
 
         if self.resourceTableRowsList and currentTable:
@@ -644,7 +633,7 @@ class UI(QMainWindow):
         if totalMaterials > 0:
             percentPerTrip = round((100 * cargo) / totalMaterials, 2)
         if stillNeeded > 0:
-            percentComplete = round(100 * (1 - stillNeeded/totalMaterials), 2)
+            percentComplete = str(round(100 * (1 - stillNeeded/totalMaterials), 2)) + "%"
         else:
             percentComplete = "Done!"
 
@@ -659,7 +648,7 @@ class UI(QMainWindow):
         self.trips_left.setText(f"({tripsCalc} Trips)")
         self.percent_per_trip.setText(f"Percent/Trip: {percentPerTrip}%")
         self.total_materials.setText(f"Remaining Materials:   {stillNeeded:,} / {totalMaterials:,}")
-        self.percent_complete.setText(f"Progress: {percentComplete}%")
+        self.percent_complete.setText(f"Progress: {percentComplete}")
 
     def clear_layout(self, layout):
         for i in reversed(range(layout.count())):
@@ -711,9 +700,6 @@ class UI(QMainWindow):
         print(f"You just sorted column {index} called: {self.resourceTableList.horizontalHeaderItem(index).text()}")
         currentMarket = int(self.stationList.currentText().split("(",1)[1].split(")",1)[0])
         resortedRowList = self.resourceTableRowsList[currentMarket]
-        print(f"The list being sorted: {resortedRowList.items()}")
-        # resortedRowList = OrderedDict(sorted(resortedRowList.items(), key=lambda item: item[index].text()))
-        # print(f"New order: {self.resourceTableRowsList[currentMarket]}")
 
     def getScsStats(self):
         highestResource = {}
