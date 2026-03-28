@@ -76,7 +76,7 @@ class UI(QMainWindow):
     def __init__(self, *args, **kwargs):
         super(UI, self).__init__()
         #properties
-        self.subVersion =".17a"
+        self.subVersion =".18a"
         self.olderThanNumDays = 0
         self.allTextSize = 12
         self.logfiles = []
@@ -286,7 +286,11 @@ class UI(QMainWindow):
         print("Reading logfile: ", logfile.split("Journal.",1)[1])
         with open(logfile, "r", encoding='iso-8859-1') as f1:
             for line in f1:
-                rawLine = json.loads(line)
+                try:
+                    rawLine = json.loads(line)
+                #apparently can try to read a bad json line
+                except json.JSONDecodeError:
+                    continue
                 # self.mostRecentReadTime = rawLine["timestamp"]
                 foundExistingColony = False
                 if "ConstructionProgress" in rawLine:
