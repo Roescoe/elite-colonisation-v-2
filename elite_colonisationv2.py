@@ -76,7 +76,7 @@ class UI(QMainWindow):
     def __init__(self, *args, **kwargs):
         super(UI, self).__init__()
         #properties
-        self.subVersion =".18a"
+        self.subVersion =".19a"
         self.olderThanNumDays = 0
         self.allTextSize = 12
         self.logfiles = []
@@ -106,6 +106,7 @@ class UI(QMainWindow):
         #set up stuff
         self.getFileSettings()
         self.getLogFileData()
+        self.populateShipList()
         
         self.displayColony()
         # self.calculateTransactions()
@@ -254,7 +255,7 @@ class UI(QMainWindow):
             self.getAllLogFileData(logfile)
         self.saveColonies("importantLogs.txt")
         self.populateStationList()
-        self.populateShipList()
+        self.updateCargo()
         # self.populateCarrierList()
 
 
